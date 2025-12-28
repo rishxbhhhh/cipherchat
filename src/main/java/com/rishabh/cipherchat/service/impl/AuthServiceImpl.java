@@ -15,6 +15,7 @@ import com.rishabh.cipherchat.dto.LoginRequest;
 import com.rishabh.cipherchat.dto.LoginResponse;
 import com.rishabh.cipherchat.dto.RegisterRequest;
 import com.rishabh.cipherchat.entity.RefreshToken;
+import com.rishabh.cipherchat.entity.Role;
 import com.rishabh.cipherchat.entity.User;
 import com.rishabh.cipherchat.repository.UserRepository;
 
@@ -52,7 +53,7 @@ public class AuthServiceImpl implements AuthService {
         User user = new User();
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-
+        user.setRole(Role.USER);
         userRepository.save(user);
         log.info("User with email " + registerRequest.getEmail() + " registered successfully.");
     }
