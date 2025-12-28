@@ -2,6 +2,7 @@ package com.rishabh.cipherchat.service;
 
 import com.rishabh.cipherchat.dto.RegisterRequest;
 import com.rishabh.cipherchat.dto.LoginRequest;
+import com.rishabh.cipherchat.dto.LoginResponse;
 
 import jakarta.transaction.Transactional;
 
@@ -10,5 +11,5 @@ public interface AuthService {
     @Transactional
     public void register(RegisterRequest registerRequest);
 
-    public String login(LoginRequest loginRequest);
+    public LoginResponse login(LoginRequest loginRequest);
 }

@@ -19,15 +19,21 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String email;
-    
+
     @Column(nullable = false)
     private String password;
 
     @Column(name = "date_created", nullable = false, updatable = false)
     private LocalDateTime dateCreated;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     @PrePersist
     protected void onCreate() {
         dateCreated = LocalDateTime.now();
+        if (role == null)
+            role = Role.USER;
     }
 }

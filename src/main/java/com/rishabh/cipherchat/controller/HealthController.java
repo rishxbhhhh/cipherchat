@@ -6,16 +6,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/health")
 public class HealthController {
 
-    @GetMapping("/health/ping")
+    @GetMapping("/ping")
     public ResponseEntity<?> ping() {
         return ResponseEntity.ok("Cipher Chat v1.0 is up.");
     }
 
-    @GetMapping("/api/test")
+    @GetMapping("/test")
     public ResponseEntity<?> testJwt() {
         return ResponseEntity.ok("Jwt token working as expected.");
     }
+
 }
