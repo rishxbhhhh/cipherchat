@@ -38,11 +38,13 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
+                        .requestMatchers("/").permitAll()
+
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
 
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        .requestMatchers("/health/**").permitAll()
+                        .requestMatchers("/health/ping").permitAll()
 
                         .requestMatchers("/h2/**").permitAll()
 
@@ -56,8 +58,6 @@ public class SecurityConfig {
                     response.setStatus(200);
                     response.getWriter().write("Logged out successfully.");
                 }))
-
-                .httpBasic(Customizer.withDefaults())
 
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
