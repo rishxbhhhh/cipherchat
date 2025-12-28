@@ -1,6 +1,8 @@
 package com.rishabh.cipherchat.service.impl;
 
 import com.rishabh.cipherchat.service.AuthService;
+import com.rishabh.cipherchat.service.JwtService;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,12 +24,14 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
     public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager) {
+            AuthenticationManager authenticationManager, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -46,11 +50,13 @@ public class AuthServiceImpl implements AuthService {
         log.info("User with email " + registerRequest.getEmail() + " registered successfully.");
     }
 
-    public void login(LoginRequest loginRequest) {
+    @Override
+    public String login(LoginRequest loginRequest) {
         Authentication authentication = new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
                 loginRequest.getPassword());
         authenticationManager.authenticate(authentication);
         log.info("User with email " + loginRequest.getEmail() + " logged in.");
+        return jwtService.generateToken(loginRequest.getEmail());
     }
 
 }

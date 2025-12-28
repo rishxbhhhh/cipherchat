@@ -13,4 +13,9 @@ public class HealthController {
     public ResponseEntity<?> ping() {
         return ResponseEntity.ok("Cipher Chat v1.0 is up.");
     }
+
+    @GetMapping("/api/test")
+    public ResponseEntity<?> testJwt() {
+        return ResponseEntity.ok("Jwt token working as expected.");
+    }
 }

@@ -10,5 +10,5 @@ public interface AuthService {
     @Transactional
     public void register(RegisterRequest registerRequest);
 
-    public void login(LoginRequest loginRequest);
+    public String login(LoginRequest loginRequest);
 }

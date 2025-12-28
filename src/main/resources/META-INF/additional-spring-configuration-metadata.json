@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "cipherchat.jwt.expiry-seconds",
+  "type": "java.lang.Long",
+  "description": "Time in seconds after which the JWT token expires. Defaults to 3600 seconds (1 hour)."
+}]}
