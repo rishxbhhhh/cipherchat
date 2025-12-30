@@ -11,6 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.rishabh.cipherchat.entity.Role;
+
 @Configuration
 public class SecurityConfig {
 
@@ -39,7 +41,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/").permitAll()
 
-                        .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/admin/**").hasAuthority(Role.ADMIN.name())
 
                         .requestMatchers("/api/auth/**").permitAll()
 
@@ -47,9 +49,9 @@ public class SecurityConfig {
 
                         .requestMatchers("/h2/**").permitAll()
 
-                        // TEMP: actuator is open; will restrict later as per TO-DO
-                        .requestMatchers("/actuator/health").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/actuator/**").hasAuthority(Role.ADMIN.name())
+
+                        .requestMatchers("/api/conversations/**").hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
 
                         .anyRequest().authenticated())
 
