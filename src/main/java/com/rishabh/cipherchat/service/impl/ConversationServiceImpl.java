@@ -16,7 +16,7 @@ import com.rishabh.cipherchat.repository.ConversationRepository;
 import com.rishabh.cipherchat.repository.UserRepository;
 import com.rishabh.cipherchat.service.ConversationService;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ConversationServiceImpl implements ConversationService {

@@ -4,7 +4,7 @@ import com.rishabh.cipherchat.dto.RegisterRequest;
 import com.rishabh.cipherchat.dto.LoginRequest;
 import com.rishabh.cipherchat.dto.LoginResponse;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface AuthService {
 

@@ -7,162 +7,235 @@
 [![Liquibase](https://img.shields.io/badge/Liquibase-Migrations-blue.svg)](https://www.liquibase.org/)
 [![Gradle](https://img.shields.io/badge/Gradle-8.x-yellow.svg)](https://gradle.org/)
 
-CipherChat is a secure, Spring Boot–based backend designed for a real-time chat application. The focus is on security first, with a clean architecture that is easy to maintain and extend.
+CipherChat is a secure Spring Boot backend designed for a real-time chat system.  
+The focus is correctness first, security second, features third — built step-by-step so everything remains understandable.
 
-The UI is not part of this project yet. This is a pure REST API meant to be consumed by a web or mobile client.
+UI is not included yet. This project is currently a REST API.
+
+---
 
 ## 🚀 Tech Stack
 
-*   **Java 21**
-*   **Spring Boot**: For building the application framework.
-*   **Spring Security**: For robust authentication and access control.
-*   **JWT (jjwt)**: For stateless, token-based authentication.
-*   **Liquibase**: For database schema migrations.
-*   **H2 Database**: For development and testing environments.
-*   **Gradle**: For dependency management and builds.
-*   **Lombok**: To reduce boilerplate code.
+- **Java 21**
+- **Spring Boot**
+- **Spring Security**
+- **JWT (jjwt)**
+- **Liquibase**
+- **H2 (dev)**
+- **Gradle**
+- **Lombok**
 
-## ⚙️ Running the project
+---
 
-To run the application, execute the following command from the root directory:
+## ⚙️ Run the project
 
 ```bash
 ./gradlew bootRun
 ```
 
-The application will start on the default port `8080`.
-*   **URL**: `http://localhost:8080`
+App runs on:
 
-## 🔐 Authentication Model (Current)
+```
+http://localhost:8080
+```
 
-The authentication system is built around JWTs for stateless sessions.
+---
 
-1.  **Registration**: Users register with an email and password. Passwords are never stored in plaintext and are securely hashed using **BCrypt**.
-2.  **Login**: On successful login, the server returns a JWT access token.
-3.  **Authenticated Requests**: The client must send the JWT in the `Authorization` header for all protected routes.
-    ```
-    Authorization: Bearer <token>
-    ```
-4.  **Logout**: Logout is currently cosmetic. Since the system is stateless, the JWT remains valid until it expires. The client is responsible for discarding the token. A future update will include a token revocation/blacklist system for a more secure logout.
+## 🔐 Authentication Model
 
-## 📡 API Reference
+Authentication is stateless using JWT.
 
-### 1️⃣ Health Check
+1️⃣ Register  
+2️⃣ Login → receive `accessToken` + `refreshToken`  
+3️⃣ Use access token on protected endpoints  
+4️⃣ Refresh token when access token expires  
+5️⃣ Logout is cosmetic for now
 
-Checks if the server is alive and running. This is a public endpoint and requires no authentication.
+Header format:
 
-*   **Endpoint**: `GET /health/ping`
-*   **Response**:
-    *   **Status**: `200 OK`
-    *   **Body**:
-        ```
-        "Cipher Chat v1.0 is up."
-        ```
+```
+Authorization: Bearer <access-token>
+```
 
-### 2️⃣ Register User
+Passwords are hashed using **BCrypt** — never stored in plaintext.
 
-Registers a new user in the system.
+---
 
-*   **Endpoint**: `POST /api/auth/register`
-*   **Request Body**:
-    ```json
-    {
-      "email": "user@example.com",
-      "password": "secret123"
-    }
-    ```
-*   **Response**:
-    *   **Status**: `200 OK`
-    *   **Body**:
-        ```
-        "User registered successfully."
-        ```
-*   **Notes**:
-    *   The `email` must be unique.
-    *   The `password` is stored hashed, never in plaintext.
+## 📡 API Reference (Implemented)
 
-### 3️⃣ Login
+### Health
 
-Authenticates a user and returns a JWT access token.
+```
+GET /health/ping
+```
 
-*   **Endpoint**: `POST /api/auth/login`
-*   **Request Body**:
-    ```json
-    {
-      "email": "user@example.com",
-      "password": "secret123"
-    }
-    ```
-*   **Response**:
-    *   **Status**: `200 OK`
-    *   **Body**:
-        ```json
-        {
-          "accessToken": "<jwt-token>",
-          "tokenType": "Bearer",
-          "expiresIn": 3600
-        }
-        ```
+```text
+Cipher Chat v1.0 is up.
+```
 
-### 4️⃣ Logout (Cosmetic – Stateless)
+Protected test:
 
-Clears the security context for the current request.
+```
+GET /health/test
+```
 
-*   **Endpoint**: `POST /api/auth/logout`
-*   **Response**:
-    *   **Status**: `200 OK`
-    *   **Body**:
-        ```
-        "Logged out successfully."
-        ```
-*   **What it does NOT do (yet)**:
-    *   It does NOT invalidate the JWT.
-    *   It does NOT block the reuse of the token before expiration.
+Requires valid JWT.
 
-### 5️⃣ Protected Test Endpoint
+---
 
-An example of an endpoint that requires a valid JWT for access.
+### Auth
 
-*   **Endpoint**: `GET /api/test`
-*   **Headers**:
-    ```
-    Authorization: Bearer <jwt-token>
-    ```
-*   **Response**:
-    *   **Status**: `200 OK`
-    *   **Body**:
-        ```
-        "Jwt token working as expected."
-        ```
-*   **Error Response**: If the token is missing or invalid, the server will respond with `401 Unauthorized`.
+#### Register
+```
+POST /api/auth/register
+```
 
-## 🛢️ H2 Console (Dev Only)
+```json
+{
+  "email": "user@example.com",
+  "password": "secret123"
+}
+```
 
-The in-memory H2 database console is enabled for development and can be accessed at:
+#### Login
+```
+POST /api/auth/login
+```
 
-*   **URL**: `http://localhost:8080/h2`
-*   **Default Credentials**:
-    *   **User**: `sa`
-    *   **Password**: (blank)
-*   **Tables to expect**:
-    *   `USERS`
-    *   `DATABASECHANGELOG`
-    *   `DATABASECHANGELOGLOCK`
+Returns:
 
-## 📌 Roadmap
+```json
+{
+  "accessToken": "<jwt>",
+  "tokenType": "Bearer",
+  "expiresIn": 3600,
+  "refreshToken": "<refresh-token>"
+}
+```
 
-Planned features for future development include:
+#### Refresh token
+```
+POST /api/auth/refresh
+```
 
--   [ ] JWT refresh tokens
--   [ ] Token revocation for a secure logout
--   [ ] User profiles
--   [ ] Conversations & messages schema
--   [ ] Real-time messaging with WebSockets
--   [ ] RSA / hybrid encryption for chat messages
--   [ ] Audit logs and metrics via Actuator
--   [ ] Externalized configurations per environment (dev, prod)
--   [ ] Postgres setup for production
+```json
+{
+  "refreshToken": "<refresh-token>"
+}
+```
+
+Returns new access token.
+
+#### Logout (cosmetic)
+
+```
+POST /api/auth/logout
+```
+
+Does not invalidate tokens yet.
+
+---
+
+## 💬 Conversations & Messages (Implemented)
+
+### Create conversation
+```
+POST /api/conversations/create
+```
+
+Private or group:
+
+```json
+{
+  "type": "PRIVATE",
+  "participantEmails": ["user2@example.com"]
+}
+```
+
+Returns conversation id.
+
+### Send message
+```
+POST /api/messages/send
+```
+
+```json
+{
+  "conversationId": 1,
+  "content": "Hello!"
+}
+```
+
+Only conversation participants can send.
+
+---
+
+## 🛢 H2 Console (Dev only)
+
+```
+http://localhost:8080/h2
+```
+
+User: `sa`  
+Password: *(blank)*
+
+---
+
+## ✅ API Test Summary (Executed)
+
+**Core flows working:**
+
+- ✔ Health endpoints  
+- ✔ Registration  
+- ✔ Login + JWT + refresh tokens  
+- ✔ Authenticated access check  
+- ✔ Create conversations (private + group)  
+- ✔ Send messages (participants only)  
+- ✔ Prevent non-participants from messaging  
+- ✔ Actuator protected for normal users  
+
+**Edge cases observed:**
+
+Some errors return **`403 Forbidden`** where more meaningful status codes would be better:
+
+| Scenario | Expected | Actual |
+|---|---|---|
+Duplicate registration | 400 / 409 | 403 |
+Conversation with invalid user | 400 / 404 | 403 |
+Message to non-existing conversation | 404 | 403 |
+
+This will be improved later using proper exception handling.
+
+---
+
+## 📌 Roadmap (Updated)
+
+### Done
+✔ JWT auth  
+✔ Refresh tokens  
+✔ Conversations  
+✔ Message sending  
+✔ Basic authorization rules  
+✔ Actuator enabled  
+✔ API testing via CLI  
+
+### Next
+- [ ] Message history API  
+- [ ] Proper exception handling (`400 / 404 / 409` vs `403`)  
+- [ ] Token revocation (real logout)  
+- [ ] Encrypt chat messages  
+- [ ] WebSockets for real-time messaging  
+- [ ] User profiles  
+- [ ] Postgres for production  
+- [ ] Admin flows  
+- [ ] Metrics dashboards  
+
+---
 
 ## 📝 Notes
 
-This backend is being built incrementally with a focus on **correctness**, **security**, and **clarity**, ensuring that every feature is both understandable and maintainable.
+This backend is intentionally built incrementally.
+
+> Every change should be clear, tested, and understood — not “magic”.
+
+Suggestions / improvements are welcome.

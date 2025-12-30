@@ -19,7 +19,7 @@ import com.rishabh.cipherchat.entity.Role;
 import com.rishabh.cipherchat.entity.User;
 import com.rishabh.cipherchat.repository.UserRepository;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 @Service

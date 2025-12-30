@@ -24,7 +24,7 @@ public class ConversationController {
         this.conversationService = conversationService;
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<?> createConversation(@RequestBody @Valid CreateConversationRequest request,
             Authentication authentication) {
         Long id = conversationService.createConversation(request, authentication.getName());

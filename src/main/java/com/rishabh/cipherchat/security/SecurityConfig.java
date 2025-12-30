@@ -47,11 +47,15 @@ public class SecurityConfig {
 
                         .requestMatchers("/health/ping").permitAll()
 
+                        .requestMatchers("/health/test").hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
+
                         .requestMatchers("/h2/**").permitAll()
 
                         .requestMatchers("/actuator/**").hasAuthority(Role.ADMIN.name())
 
                         .requestMatchers("/api/conversations/**").hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
+
+                        .requestMatchers("/api/messages/**").hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
 
                         .anyRequest().authenticated())
 
