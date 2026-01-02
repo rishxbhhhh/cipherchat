@@ -11,6 +11,7 @@ import com.rishabh.cipherchat.entity.Conversation;
 import com.rishabh.cipherchat.entity.ConversationParticipant;
 import com.rishabh.cipherchat.entity.ConversationType;
 import com.rishabh.cipherchat.entity.User;
+import com.rishabh.cipherchat.exception.ResourceNotFoundException;
 import com.rishabh.cipherchat.repository.ConversationParticipantRepository;
 import com.rishabh.cipherchat.repository.ConversationRepository;
 import com.rishabh.cipherchat.repository.UserRepository;
@@ -41,10 +42,10 @@ public class ConversationServiceImpl implements ConversationService {
         emails.add(creatorEmail);
 
         List<User> participants = userRepository.findAllByEmailIn(new ArrayList<>(emails))
-                .orElseThrow(() -> new IllegalStateException("no users found."));
+                .orElseThrow(() -> new ResourceNotFoundException("no users found."));
 
         if (participants.size() != emails.size()) {
-            throw new IllegalStateException("One or more users not found.");
+            throw new ResourceNotFoundException("One or more users not found.");
         }
 
         Conversation conversation = new Conversation();

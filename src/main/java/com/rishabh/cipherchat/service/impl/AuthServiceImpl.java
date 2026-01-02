@@ -17,6 +17,7 @@ import com.rishabh.cipherchat.dto.RegisterRequest;
 import com.rishabh.cipherchat.entity.RefreshToken;
 import com.rishabh.cipherchat.entity.Role;
 import com.rishabh.cipherchat.entity.User;
+import com.rishabh.cipherchat.exception.ConflictException;
 import com.rishabh.cipherchat.repository.UserRepository;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +48,7 @@ public class AuthServiceImpl implements AuthService {
     public void register(RegisterRequest registerRequest) {
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
             log.error("Email already registered.");
-            throw new IllegalStateException("Email already registered.");
+            throw new ConflictException("Email already registered.");
         }
 
         User user = new User();
