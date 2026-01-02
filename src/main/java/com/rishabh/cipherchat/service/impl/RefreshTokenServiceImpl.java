@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.rishabh.cipherchat.entity.RefreshToken;
 import com.rishabh.cipherchat.entity.User;
+import com.rishabh.cipherchat.exception.BadRequestException;
 import com.rishabh.cipherchat.repository.RefreshTokenRepository;
 import com.rishabh.cipherchat.service.RefreshTokenService;
 
@@ -34,10 +35,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     public RefreshToken verify(String tokenValue) {
         RefreshToken token = refreshTokenRepository.findByToken(tokenValue)
-                .orElseThrow(() -> new IllegalStateException("Invalid refresh token."));
+                .orElseThrow(() -> new BadRequestException("Invalid refresh token."));
         if (token.getExpiry().isBefore(Instant.now())) {
             refreshTokenRepository.delete(token);
-            throw new IllegalStateException("Refresh token expired.");
+            throw new BadRequestException("Refresh token expired.");
         }
         return token;
     }

@@ -2,11 +2,14 @@ package com.rishabh.cipherchat.service.impl;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException.Forbidden;
 
 import com.rishabh.cipherchat.dto.SendMessageRequest;
 import com.rishabh.cipherchat.entity.Conversation;
 import com.rishabh.cipherchat.entity.Message;
 import com.rishabh.cipherchat.entity.User;
+import com.rishabh.cipherchat.exception.ForbiddenException;
+import com.rishabh.cipherchat.exception.ResourceNotFoundException;
 import com.rishabh.cipherchat.repository.ConversationParticipantRepository;
 import com.rishabh.cipherchat.repository.ConversationRepository;
 import com.rishabh.cipherchat.repository.MessageRepository;
@@ -36,12 +39,12 @@ public class MessageServiceImpl implements MessageService {
     public Long sendMessage(SendMessageRequest request, String senderEmail) {
         if (conversationParticipantRepository.existsByConversationIdAndUserEmail(request.getConversationId(),
                 senderEmail) == false) {
-            throw new IllegalStateException("User is not a part of this conversation.");
+            throw new ForbiddenException("User is not a part of this conversation.");
         }
         Conversation conversation = conversationRepository.findById(request.getConversationId())
-                .orElseThrow(() -> new IllegalStateException("Conversation not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Conversation not found."));
         User sender = userRepository.findByEmail(senderEmail)
-                .orElseThrow(() -> new IllegalStateException("Sender not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Sender not found."));
         Message message = new Message();
         message.setConversation(conversation);
         message.setSender(sender);

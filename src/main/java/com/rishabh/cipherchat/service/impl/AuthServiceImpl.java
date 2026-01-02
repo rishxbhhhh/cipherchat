@@ -18,6 +18,7 @@ import com.rishabh.cipherchat.entity.RefreshToken;
 import com.rishabh.cipherchat.entity.Role;
 import com.rishabh.cipherchat.entity.User;
 import com.rishabh.cipherchat.exception.ConflictException;
+import com.rishabh.cipherchat.exception.ResourceNotFoundException;
 import com.rishabh.cipherchat.repository.UserRepository;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -65,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
                 loginRequest.getPassword());
         authenticationManager.authenticate(authentication);
         User user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new IllegalStateException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         String jwt = jwtService.generateToken(loginRequest.getEmail());
         RefreshToken refreshToken = refreshTokenService.create(user);
         log.info("User with email " + loginRequest.getEmail() + " logged in.");
