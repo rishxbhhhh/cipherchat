@@ -8,8 +8,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 
 import com.rishabh.cipherchat.dto.LoginRequest;
 import com.rishabh.cipherchat.dto.LoginResponse;
@@ -62,9 +64,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
-        Authentication authentication = new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
-                loginRequest.getPassword());
-        authenticationManager.authenticate(authentication);
+        try {
+            Authentication authentication = new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
+                    loginRequest.getPassword());
+            authenticationManager.authenticate(authentication);
+        } catch (AuthenticationException e) {
+            log.warn("Login failed for user {}: {}", loginRequest.getEmail(), e.getMessage());
+            throw new BadCredentialsException("Invalid username or password.");
+        }
         User user = userRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         String jwt = jwtService.generateToken(loginRequest.getEmail());

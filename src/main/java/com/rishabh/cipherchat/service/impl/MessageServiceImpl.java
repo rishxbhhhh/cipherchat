@@ -2,7 +2,6 @@ package com.rishabh.cipherchat.service.impl;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.HttpClientErrorException.Forbidden;
 
 import com.rishabh.cipherchat.dto.SendMessageRequest;
 import com.rishabh.cipherchat.entity.Conversation;
@@ -37,14 +36,14 @@ public class MessageServiceImpl implements MessageService {
     @Transactional
     @SuppressWarnings("null")
     public Long sendMessage(SendMessageRequest request, String senderEmail) {
-        if (conversationParticipantRepository.existsByConversationIdAndUserEmail(request.getConversationId(),
-                senderEmail) == false) {
-            throw new ForbiddenException("User is not a part of this conversation.");
-        }
         Conversation conversation = conversationRepository.findById(request.getConversationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found."));
         User sender = userRepository.findByEmail(senderEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Sender not found."));
+        if (conversationParticipantRepository.existsByConversationIdAndUserEmail(request.getConversationId(),
+                senderEmail) == false) {
+            throw new ForbiddenException("User is not a part of this conversation.");
+        }
         Message message = new Message();
         message.setConversation(conversation);
         message.setSender(sender);
