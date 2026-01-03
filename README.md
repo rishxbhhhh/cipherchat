@@ -168,6 +168,13 @@ POST /api/messages/send
 
 Only conversation participants can send.
 
+### Get message history
+```
+GET /api/messages/history?conversationId={id}&page=0&size=20
+```
+
+Only conversation participants can retrieve.
+
 ---
 
 ## 🛢 H2 Console (Dev only)
@@ -181,31 +188,25 @@ Password: *(blank)*
 
 ---
 
-## ✅ API Test Summary (Executed)
+## ✅ API Test Summary (All Pass)
 
 **Core flows working:**
 
-- ✔ Health endpoints  
-- ✔ Registration  
-- ✔ Login + JWT + refresh tokens  
-- ✔ Authenticated access check  
-- ✔ Create conversations (private + group)  
-- ✔ Send messages (participants only)  
-- ✔ Prevent non-participants from messaging  
-- ✔ Actuator protected for normal users  
+- ✔ Health endpoints
+- ✔ Registration
+- ✔ Login + JWT + refresh tokens
+- ✔ Authenticated access check
+- ✔ Create conversations (private + group)
+- ✔ Send messages (participants only)
+- ✔ Prevent non-participants from messaging
+- ✔ Actuator protected for normal users
 
-**Edge cases observed:**
+**Edge cases now handled correctly:**
 
-Some errors return **`403 Forbidden`** where more meaningful status codes would be better:
-
-| Scenario | Expected | Actual |
-|---|---|---|
-Duplicate registration | 400 / 409 | 403 |
-Conversation with invalid user | 400 / 404 | 403 |
-Message to non-existing conversation | 404 | 403 |
-
-This will be improved later using proper exception handling.
-
+- ✔ Duplicate registration (`409 Conflict`)
+- ✔ Incorrect credentials (`401 Unauthorized`)
+- ✔ Conversation with invalid user (`404 Not Found`)
+- ✔ Message to non-existing conversation (`404 Not Found`)
 ---
 
 ## 📌 Roadmap (Updated)

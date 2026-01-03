@@ -2,8 +2,11 @@ package com.rishabh.cipherchat.service.impl;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import com.rishabh.cipherchat.dto.SendMessageRequest;
+import com.rishabh.cipherchat.dto.MessageResponse;
 import com.rishabh.cipherchat.entity.Conversation;
 import com.rishabh.cipherchat.entity.Message;
 import com.rishabh.cipherchat.entity.User;
@@ -50,5 +53,21 @@ public class MessageServiceImpl implements MessageService {
         message.setContent(request.getContent());
         messageRepository.save(message);
         return message.getId();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<MessageResponse> getHistory(Long conversationId, int page, int size, String userEmail) {
+        if (conversationParticipantRepository.existsByConversationIdAndUserEmail(conversationId, userEmail) == false) {
+            throw new ForbiddenException("User is not a part of this conversation.");
+        }
+        Page<Message> messages = messageRepository.findByConversationIdOrderBySentAtDesc(conversationId,
+                PageRequest.of(page, size));
+        return messages.map(message -> new MessageResponse(
+                message.getId(),
+                message.getSender().getEmail(),
+                message.getContent(),
+                message.getSentAt()
+        ));
     }
 }

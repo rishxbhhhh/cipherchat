@@ -90,6 +90,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 
 ---
 
+
 ### Step 4: Authenticated Endpoint Test
 
 Verify that the obtained `accessToken` works on a protected endpoint.
@@ -108,6 +109,7 @@ curl -X GET http://localhost:8080/health/test \
 - **Body:** `Jwt token working as expected.`
 
 ---
+
 
 ### Step 5: Conversation Creation
 
@@ -149,6 +151,7 @@ Test the creation of private and group conversations. All requests must be authe
 
 ---
 
+
 ### Step 6: Message Sending & Authorization
 
 Test the sending of messages to the created conversations.
@@ -177,6 +180,31 @@ Test the sending of messages to the created conversations.
     -d '{"conversationId": 1, "content": "message from non-participant"}'
     ```
     *Expected Response:* `403 Forbidden`. This confirms the security rule is working.
+
+---
+
+### Step 7: Get Message History
+
+Test retrieving message history for a conversation.
+
+**Endpoint:** `GET /api/messages/history`
+**Headers:** `Authorization: Bearer <ACCESS_TOKEN>`
+
+**Test Cases:**
+
+1.  **Successful History Retrieval (Participant):** `user1` retrieves the history for conversation `1`.
+    ```bash
+    curl -X GET "http://localhost:8080/api/messages/history?conversationId=1&page=0&size=10" \
+    -H "Authorization: Bearer <USER1_ACCESS_TOKEN>"
+    ```
+    *Expected Response:* `200 OK` with a JSON object containing a list of messages.
+
+2.  **Failed History Retrieval (Non-Participant):** `user3` attempts to retrieve the history for conversation `1`.
+    ```bash
+    curl -X GET "http://localhost:8080/api/messages/history?conversationId=1&page=0&size=10" \
+    -H "Authorization: Bearer <USER3_ACCESS_TOKEN>"
+    ```
+    *Expected Response:* `403 Forbidden`.
 
 ---
 

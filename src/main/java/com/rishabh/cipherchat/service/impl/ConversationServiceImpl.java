@@ -48,6 +48,14 @@ public class ConversationServiceImpl implements ConversationService {
             throw new ResourceNotFoundException("One or more users not found.");
         }
 
+        if(type == ConversationType.PRIVATE) {
+            Conversation existingConversation = conversationRepository.findPrivateConversationByParticipants(emails)
+                    .orElse(null);
+            if(existingConversation != null) {
+                return existingConversation.getId();
+            }
+        }
+
         Conversation conversation = new Conversation();
         conversation.setType(type);
         conversationRepository.save(conversation);
