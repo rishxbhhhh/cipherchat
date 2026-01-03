@@ -131,7 +131,16 @@ Test the creation of private and group conversations. All requests must be authe
     ```
     *Expected Response:* A JSON object with `conversationId: 1`.
 
-2.  **Create Private Chat (user1 & user3):**
+2.  **Attempt to Re-create Private Chat (user1 & user2 - Idempotent Test):**
+    ```bash
+    curl -X POST http://localhost:8080/api/conversations/create \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer <USER1_ACCESS_TOKEN>" \
+    -d '{"type": "PRIVATE", "participantEmails": ["user2@example.com"]}'
+    ```
+    *Expected Response:* A JSON object with the *same* `conversationId` as the first attempt (e.g., `conversationId: 1`). This confirms the idempotent behavior.
+
+3.  **Create Private Chat (user1 & user3):**
     ```bash
     curl -X POST http://localhost:8080/api/conversations/create \
     -H "Content-Type: application/json" \

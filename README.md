@@ -196,7 +196,8 @@ Password: *(blank)*
 - ✔ Registration
 - ✔ Login + JWT + refresh tokens
 - ✔ Authenticated access check
-- ✔ Create conversations (private + group)
+- ✔ Conversation Creation (Private): Successfully create a private chat between `user1` and `user2`. (Returns conversationId)
+- ✔ Conversation Creation (Private): Attempt to create the same private chat; expect the same conversationId.
 - ✔ Send messages (participants only)
 - ✔ Prevent non-participants from messaging
 - ✔ Actuator protected for normal users
