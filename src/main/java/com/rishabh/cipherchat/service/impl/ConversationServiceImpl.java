@@ -11,6 +11,7 @@ import com.rishabh.cipherchat.entity.Conversation;
 import com.rishabh.cipherchat.entity.ConversationParticipant;
 import com.rishabh.cipherchat.entity.ConversationType;
 import com.rishabh.cipherchat.entity.User;
+import com.rishabh.cipherchat.exception.BadRequestException;
 import com.rishabh.cipherchat.exception.ResourceNotFoundException;
 import com.rishabh.cipherchat.repository.ConversationParticipantRepository;
 import com.rishabh.cipherchat.repository.ConversationRepository;
@@ -49,6 +50,9 @@ public class ConversationServiceImpl implements ConversationService {
         }
 
         if(type == ConversationType.PRIVATE) {
+            if (emails.size() != 2) {
+                throw new BadRequestException("Private conversations must have exactly two participants.");
+            }
             Conversation existingConversation = conversationRepository.findPrivateConversationByParticipants(emails)
                     .orElse(null);
             if(existingConversation != null) {
