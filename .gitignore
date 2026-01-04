@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### External Config ###
+opt/
+log/
