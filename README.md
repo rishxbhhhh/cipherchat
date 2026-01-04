@@ -208,6 +208,7 @@ Password: *(blank)*
 - ✔ Incorrect credentials (`401 Unauthorized`)
 - ✔ Conversation with invalid user (`404 Not Found`)
 - ✔ Message to non-existing conversation (`404 Not Found`)
+- ✔ Run with external configuration: `./gradlew bootRun --args='--spring.config.additional-location=file:./opt/cipherchat/'`
 ---
 
 ## 📌 Roadmap (Updated)
@@ -219,13 +220,14 @@ Password: *(blank)*
 ✔ Message sending  
 ✔ Basic authorization rules  
 ✔ Actuator enabled  
-✔ API testing via CLI  
+✔ API testing via CLI
+✔ Message history API
+✔ Proper exception handling (`400 / 404 / 409` vs `403`)
 
-### Next
-- [ ] Message history API  
-- [ ] Proper exception handling (`400 / 404 / 409` vs `403`)  
+
+### Next  
+- [ ] Encrypt chat messages (RSA + AES)
 - [ ] Token revocation (real logout)  
-- [ ] Encrypt chat messages  
 - [ ] WebSockets for real-time messaging  
 - [ ] User profiles  
 - [ ] Postgres for production  

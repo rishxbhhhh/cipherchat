@@ -1,0 +1,9 @@
+==================== To run the app with external configuration and localTunnel ====================
+1. create an application.properties file similar to default and update it as per your need
+2. setup and start localTunnel using commands: 
+--> npm install -g localtunnel
+--> lt --port 8080 --subdomain <some domain>
+3. add the URL returned to cipherchat.allowed-origins
+4. boot up the application with command:
+-->./gradlew bootRun --args='--spring.config.additional-location=file:<path to config directory>'
+5. this localTunnel URL will require a password which can be fetched from the PC running the app using URL:https://loca.lt/mytunnelpassword
