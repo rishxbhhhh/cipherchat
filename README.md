@@ -220,9 +220,9 @@ Password: *(blank)*
 ✔ Message sending  
 ✔ Basic authorization rules  
 ✔ Actuator enabled  
-✔ API testing via CLI
-✔ Message history API
-✔ Proper exception handling (`400 / 404 / 409` vs `403`)
+✔ API testing via CLI  
+✔ Message history API  
+✔ Proper exception handling (`400 / 404 / 409` vs `403`)  
 
 
 ### Next  
