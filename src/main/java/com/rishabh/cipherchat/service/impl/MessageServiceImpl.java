@@ -16,6 +16,7 @@ import com.rishabh.cipherchat.repository.ConversationParticipantRepository;
 import com.rishabh.cipherchat.repository.ConversationRepository;
 import com.rishabh.cipherchat.repository.MessageRepository;
 import com.rishabh.cipherchat.repository.UserRepository;
+import com.rishabh.cipherchat.security.EncryptionService;
 import com.rishabh.cipherchat.service.MessageService;
 
 @Service
@@ -24,15 +25,18 @@ public class MessageServiceImpl implements MessageService {
     private final ConversationRepository conversationRepository;
     private final UserRepository userRepository;
     private final ConversationParticipantRepository conversationParticipantRepository;
+    private final EncryptionService encryptionService;
 
     public MessageServiceImpl(MessageRepository messageRepository,
             ConversationRepository conversationRepository,
             UserRepository userRepository,
-            ConversationParticipantRepository conversationParticipantRepository) {
+            ConversationParticipantRepository conversationParticipantRepository,
+            EncryptionService encryptionService ) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.userRepository = userRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
+        this.encryptionService = encryptionService; 
     }
 
     @Override
@@ -50,7 +54,7 @@ public class MessageServiceImpl implements MessageService {
         Message message = new Message();
         message.setConversation(conversation);
         message.setSender(sender);
-        message.setContent(request.getContent());
+        message.setContent(encryptionService.encrypt(request.getContent()));
         messageRepository.save(message);
         return message.getId();
     }
@@ -66,7 +70,7 @@ public class MessageServiceImpl implements MessageService {
         return messages.map(message -> new MessageResponse(
                 message.getId(),
                 message.getSender().getEmail(),
-                message.getContent(),
+                encryptionService.decrypt(message.getContent()),
                 message.getSentAt()
         ));
     }
