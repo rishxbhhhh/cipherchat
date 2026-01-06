@@ -9,7 +9,7 @@
         Create users table with email, password and created date.
         Passwords will be stored as hashed values.
         </comment>
-        <createTable tableName="users">
+        <createTable tableName="c_users">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false" />
             </column>
