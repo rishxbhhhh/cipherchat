@@ -223,10 +223,10 @@ Password: *(blank)*
 ✔ API testing via CLI  
 ✔ Message history API  
 ✔ Proper exception handling (`400 / 404 / 409` vs `403`)  
-
+✔ Encrypt chat messages (RSA + AES)  
 
 ### Next  
-- [ ] Encrypt chat messages (RSA + AES)
+- [ ] External Configuration support to custom MasterKey
 - [ ] Token revocation (real logout)  
 - [ ] WebSockets for real-time messaging  
 - [ ] User profiles  
