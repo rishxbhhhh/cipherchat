@@ -1,10 +1,12 @@
 package com.rishabh.cipherchat;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,12 +15,23 @@ import org.slf4j.LoggerFactory;
 public class CipherchatApplication implements CommandLineRunner {
 
 	private static final Logger logger = LoggerFactory.getLogger(CipherchatApplication.class);
+	@Autowired
+	private JdbcClient jdbcClient;
 	public static void main(String[] args) {
 		SpringApplication.run(CipherchatApplication.class, args);
 	}
 
 	@Override
 	public void run(String... args) throws Exception {
+		// seed one admin user and one normal user if not present
+		if (jdbcClient.sql("SELECT COUNT(*) FROM users").query(Integer.class).stream().findFirst().orElse(0) == 0) {
+			jdbcClient.sql("INSERT INTO users (email, password, role) VALUES (?, ?, ?)")
+					.params("admin@example.com", "admin", "ADMIN")
+					.update();
+			jdbcClient.sql("INSERT INTO users (email, password, role) VALUES (?, ?, ?)")
+					.params("user@example.com", "user", "USER")
+					.update();
+		}
 		logger.info("CipherChat Application Started Successfully.");
 	}
 }
