@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <changeSet id="7" author="rishabh-rajpurohit">
+        <comment>Add public key and private key encrypted columns to users table</comment>
+
+        <addColumn tableName="c_users">
+            <column name="public_key" type="CLOB" />
+        </addColumn>
+        <addColumn tableName="c_users">
+            <column name="private_key_encrypted" type="CLOB" />
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

@@ -8,15 +8,18 @@ import org.springframework.stereotype.Service;
 
 import com.rishabh.cipherchat.dto.CreateConversationRequest;
 import com.rishabh.cipherchat.entity.Conversation;
+import com.rishabh.cipherchat.entity.ConversationKey;
 import com.rishabh.cipherchat.entity.ConversationParticipant;
 import com.rishabh.cipherchat.entity.ConversationType;
 import com.rishabh.cipherchat.entity.User;
 import com.rishabh.cipherchat.exception.BadRequestException;
 import com.rishabh.cipherchat.exception.ResourceNotFoundException;
+import com.rishabh.cipherchat.repository.ConversationKeyRepository;
 import com.rishabh.cipherchat.repository.ConversationParticipantRepository;
 import com.rishabh.cipherchat.repository.ConversationRepository;
 import com.rishabh.cipherchat.repository.UserRepository;
 import com.rishabh.cipherchat.service.ConversationService;
+import com.rishabh.cipherchat.service.EncryptionService;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,12 +29,17 @@ public class ConversationServiceImpl implements ConversationService {
     private final ConversationRepository conversationRepository;
     private final UserRepository userRepository;
     private final ConversationParticipantRepository conversationParticipantRepository;
+    private final EncryptionService encryptionService;
+    private final ConversationKeyRepository conversationKeyRepository;
 
     public ConversationServiceImpl(ConversationRepository conversationRepository, UserRepository userRepository,
-            ConversationParticipantRepository conversationParticipantRepository) {
+            ConversationParticipantRepository conversationParticipantRepository, EncryptionService encryptionService,
+            ConversationKeyRepository conversationKeyRepository) {
         this.conversationRepository = conversationRepository;
         this.userRepository = userRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
+        this.encryptionService = encryptionService;
+        this.conversationKeyRepository = conversationKeyRepository;
     }
 
     @Override
@@ -49,16 +57,18 @@ public class ConversationServiceImpl implements ConversationService {
             throw new ResourceNotFoundException("One or more users not found.");
         }
 
-        if(type == ConversationType.PRIVATE) {
+        if (type == ConversationType.PRIVATE) {
             if (emails.size() != 2) {
                 throw new BadRequestException("Private conversations must have exactly two participants.");
             }
             Conversation existingConversation = conversationRepository.findPrivateConversationByParticipants(emails)
                     .orElse(null);
-            if(existingConversation != null) {
+            if (existingConversation != null) {
                 return existingConversation.getId();
             }
         }
+
+        byte[] conversationKey = encryptionService.generateAesKey();
 
         Conversation conversation = new Conversation();
         conversation.setType(type);
@@ -69,6 +79,13 @@ public class ConversationServiceImpl implements ConversationService {
             cp.setConversation(conversation);
             cp.setUser(u);
             conversationParticipantRepository.save(cp);
+        
+            String encryptedConversationKey = encryptionService.encryptForUser(conversationKey, u.getPublicKey());
+            ConversationKey ck = new ConversationKey();
+            ck.setConversation(conversation);
+            ck.setUser(u);
+            ck.setConversationKey(encryptedConversationKey);
+            conversationKeyRepository.save(ck);
         }
 
         return conversation.getId();

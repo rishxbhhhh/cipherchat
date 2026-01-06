@@ -3,9 +3,13 @@ package com.rishabh.cipherchat.service.impl;
 import com.rishabh.cipherchat.service.AuthService;
 import com.rishabh.cipherchat.service.JwtService;
 import com.rishabh.cipherchat.service.RefreshTokenService;
+import com.rishabh.cipherchat.service.KeyService;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.security.KeyPair;
+import java.util.Base64;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -35,15 +39,17 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final KeyService keyService;
 
     public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager, JwtService jwtService,
-            RefreshTokenService refreshTokenService) {
+            RefreshTokenService refreshTokenService, KeyService keyService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
+        this.keyService = keyService;
     }
 
     @Override
@@ -53,11 +59,13 @@ public class AuthServiceImpl implements AuthService {
             log.error("Email already registered.");
             throw new ConflictException("Email already registered.");
         }
-
         User user = new User();
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setRole(Role.USER);
+        KeyPair keyPair = keyService.generateKeyPair();
+        user.setPublicKey(Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded()));
+        user.setPrivateKeyEncrypted(keyService.encryptPrivateKey(keyPair.getPrivate().getEncoded()));
         userRepository.save(user);
         log.info("User with email " + registerRequest.getEmail() + " registered successfully.");
     }

@@ -30,6 +30,12 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Column(name = "public_key", columnDefinition = "TEXT")
+    private String publicKey;
+
+    @Column(name = "private_key_encrypted", columnDefinition = "TEXT")
+    private String privateKeyEncrypted;
+
     @PrePersist
     protected void onCreate() {
         dateCreated = LocalDateTime.now();

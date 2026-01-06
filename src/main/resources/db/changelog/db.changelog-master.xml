@@ -10,5 +10,7 @@
     <include file="004-create-conversations.xml" relativeToChangelogFile="true" />
     <include file="005-create-conversation-participants.xml" relativeToChangelogFile="true" />
     <include file="006-create-messages.xml" relativeToChangelogFile="true" />
+    <include file="007-add-publickey-privatekey-to-users.xml" relativeToChangelogFile="true" />
+    <include file="008-create-conversation-keys.xml" relativeToChangelogFile="true" />
 
 </databaseChangeLog>
