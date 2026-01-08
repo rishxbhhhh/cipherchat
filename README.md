@@ -226,7 +226,8 @@ Password: *(blank)*
 ✔ Encrypt chat messages (RSA + AES)  
 
 ### Next  
-- [ ] External Configuration support to custom MasterKey
+- [ ] External Configuration support to custom MasterKey(OR below one)  
+- [ ] using secretKey generated from user password + salt to encrypt user's RSA privatekey  
 - [ ] Token revocation (real logout)  
 - [ ] WebSockets for real-time messaging  
 - [ ] User profiles  

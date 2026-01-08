@@ -31,7 +31,7 @@
         <addForeignKeyConstraint
             baseTableName="refresh_tokens"
             baseColumnNames="user_id"
-            referencedTableName="users"
+            referencedTableName="c_users"
             referencedColumnNames="id"
             constraintName="fk_refresh_user" />
     </changeSet>

@@ -30,7 +30,7 @@
             constraintName="fk_messages_conversation"
             referencedTableName="conversations" referencedColumnNames="id" />
         <addForeignKeyConstraint baseTableName="messages" baseColumnNames="sender_id"
-            constraintName="fk_messages_sender" referencedTableName="users"
+            constraintName="fk_messages_sender" referencedTableName="c_users"
             referencedColumnNames="id" />
     </changeSet>
 

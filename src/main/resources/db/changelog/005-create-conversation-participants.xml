@@ -27,7 +27,7 @@
             constraintName="fk_conversation_participants_conversation"
             referencedTableName="conversations" referencedColumnNames="id" />
         <addForeignKeyConstraint baseTableName="conversation_participants" baseColumnNames="user_id"
-            constraintName="fk_conversation_participants_user" referencedTableName="users"
+            constraintName="fk_conversation_participants_user" referencedTableName="c_users"
             referencedColumnNames="id" />
     </changeSet>
 

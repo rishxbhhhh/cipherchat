@@ -8,7 +8,7 @@
         <comment>
             Add role column to users table.
         </comment>
-        <addColumn tableName="users">
+        <addColumn tableName="c_users">
             <column name="role" type="VARCHAR(50)" defaultValue="USER">
                 <constraints nullable="false" />
             </column>
