@@ -3,16 +3,20 @@ package com.rishabh.cipherchat.service.impl;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.rishabh.cipherchat.dto.ConversationListResponse;
 import com.rishabh.cipherchat.dto.CreateConversationRequest;
 import com.rishabh.cipherchat.entity.Conversation;
 import com.rishabh.cipherchat.entity.ConversationKey;
 import com.rishabh.cipherchat.entity.ConversationParticipant;
 import com.rishabh.cipherchat.entity.ConversationType;
+import com.rishabh.cipherchat.entity.Role;
 import com.rishabh.cipherchat.entity.User;
 import com.rishabh.cipherchat.exception.BadRequestException;
+import com.rishabh.cipherchat.exception.ForbiddenException;
 import com.rishabh.cipherchat.exception.ResourceNotFoundException;
 import com.rishabh.cipherchat.repository.ConversationKeyRepository;
 import com.rishabh.cipherchat.repository.ConversationParticipantRepository;
@@ -50,11 +54,18 @@ public class ConversationServiceImpl implements ConversationService {
         HashSet<String> emails = new HashSet<>(request.getParticipantEmails());
         emails.add(creatorEmail);
 
+        // Admin accounts cannot participate in conversations
         List<User> participants = userRepository.findAllByEmailIn(new ArrayList<>(emails))
                 .orElseThrow(() -> new ResourceNotFoundException("no users found."));
 
         if (participants.size() != emails.size()) {
             throw new ResourceNotFoundException("One or more users not found.");
+        }
+
+        // Admin accounts cannot chat
+        boolean hasAdmin = participants.stream().anyMatch(u -> u.getRole() == Role.ADMIN);
+        if (hasAdmin) {
+            throw new ForbiddenException("Admin accounts cannot participate in conversations.");
         }
 
         if (type == ConversationType.PRIVATE) {
@@ -89,5 +100,21 @@ public class ConversationServiceImpl implements ConversationService {
         }
 
         return conversation.getId();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ConversationListResponse> listConversations(String userEmail) {
+        return conversationParticipantRepository.findByUserEmailWithConversation(userEmail)
+                .stream()
+                .map(cp -> {
+                    Conversation c = cp.getConversation();
+                    return new ConversationListResponse(
+                            c.getId(),
+                            c.getType().name(),
+                            "Conversation " + c.getId(),
+                            c.getCreatedAt());
+                })
+                .collect(Collectors.toList());
     }
 }

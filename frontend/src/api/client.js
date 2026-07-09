@@ -1,0 +1,60 @@
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: '/api',
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// Attach JWT to every request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle 401 — try refresh, then redirect to login
+let refreshPromise = null;
+
+api.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const original = error.config;
+
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true;
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      if (refreshToken) {
+        try {
+          // Deduplicate concurrent refresh attempts
+          if (!refreshPromise) {
+            refreshPromise = axios
+              .post('/api/auth/refresh', { refreshToken })
+              .then((res) => {
+                localStorage.setItem('accessToken', res.data.accessToken);
+                return res.data.accessToken;
+              })
+              .finally(() => {
+                refreshPromise = null;
+              });
+          }
+
+          const newToken = await refreshPromise;
+          original.headers.Authorization = `Bearer ${newToken}`;
+          return api(original);
+        } catch {
+          localStorage.clear();
+          window.location.href = '/login';
+        }
+      } else {
+        localStorage.clear();
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;

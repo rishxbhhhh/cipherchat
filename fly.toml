@@ -1,0 +1,27 @@
+app = 'cipherchat'
+primary_region = 'sin'
+
+[build]
+
+[env]
+  SPRING_PROFILES_ACTIVE = 'prod'
+  JAVA_TOOL_OPTIONS = '-Xmx384m -Xss256k -XX:+UseSerialGC -XX:MaxRAM=450m -XX:+ExitOnOutOfMemoryError'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = '10s'
+    timeout = '5s'
+    grace_period = '180s'
+    method = 'get'
+    path = '/health/ping'
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1

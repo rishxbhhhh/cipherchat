@@ -36,10 +36,15 @@ public class User {
     @Column(name = "private_key_encrypted", columnDefinition = "TEXT")
     private String privateKeyEncrypted;
 
+    @Column(nullable = false)
+    private Boolean enabled = true;
+
     @PrePersist
     protected void onCreate() {
         dateCreated = LocalDateTime.now();
         if (role == null)
             role = Role.USER;
+        if (enabled == null)
+            enabled = true;
     }
 }

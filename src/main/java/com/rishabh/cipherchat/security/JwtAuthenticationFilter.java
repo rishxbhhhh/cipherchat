@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.rishabh.cipherchat.repository.TokenBlacklistRepository;
 import com.rishabh.cipherchat.service.JwtService;
 
 import jakarta.servlet.FilterChain;
@@ -20,10 +21,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final TokenBlacklistRepository tokenBlacklistRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService,
+            TokenBlacklistRepository tokenBlacklistRepository) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.tokenBlacklistRepository = tokenBlacklistRepository;
     }
 
     @SuppressWarnings("null")
@@ -38,6 +42,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         String token = header.substring(7);
         if (jwtService.validateToken(token)) {
+            String tokenId = jwtService.extractTokenId(token);
+            if (tokenId != null && tokenBlacklistRepository.existsByTokenId(tokenId)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
             String email = jwtService.extractEmail(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
             var auth = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(userDetails,

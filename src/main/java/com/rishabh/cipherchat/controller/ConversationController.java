@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,5 +30,10 @@ public class ConversationController {
             Authentication authentication) {
         Long id = conversationService.createConversation(request, authentication.getName());
         return ResponseEntity.ok(Map.of("conversationId", id));
+    }
+
+    @GetMapping
+    public ResponseEntity<?> listConversations(Authentication authentication) {
+        return ResponseEntity.ok(conversationService.listConversations(authentication.getName()));
     }
 }

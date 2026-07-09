@@ -61,12 +61,29 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers("/").permitAll()
-                        
+
+                        .requestMatchers("/login", "/register", "/chat").permitAll()
+
+                        .requestMatchers("/index.html", "/assets/**", "/vite.svg", "/favicon.svg").permitAll()
+
+                        .requestMatchers(
+                                request -> {
+                                    String path = request.getRequestURI();
+                                    return !path.startsWith("/api/")
+                                            && !path.startsWith("/health/")
+                                            && !path.startsWith("/ws")
+                                            && !path.startsWith("/h2")
+                                            && !path.startsWith("/actuator");
+                                }
+                        ).permitAll()
+
                         .requestMatchers("/api/admin/**").hasAuthority(Role.ADMIN.name())
 
                         .requestMatchers("/api/auth/**").permitAll()
 
                         .requestMatchers("/health/ping").permitAll()
+
+                        .requestMatchers("/ws/**").permitAll()
 
                         .requestMatchers("/health/test").hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
 

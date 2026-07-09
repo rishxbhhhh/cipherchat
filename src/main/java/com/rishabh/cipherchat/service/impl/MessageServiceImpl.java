@@ -3,9 +3,7 @@ package com.rishabh.cipherchat.service.impl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.KeyFactory;
 import java.security.PrivateKey;
-import java.security.spec.PKCS8EncodedKeySpec;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -71,17 +69,7 @@ public class MessageServiceImpl implements MessageService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Conversation key not found for user."));
 
-                // decrypt user's private key first
-                byte[] privateKeyBytes = keyService.decryptPrivateKey(sender.getPrivateKeyEncrypted());
-
-                // rebuild PrivateKey object
-                PrivateKey privateKey;
-                try {
-                        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-                        privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateKeyBytes));
-                } catch (Exception e) {
-                        throw new RuntimeException("Failed to rebuild private key.", e);
-                }
+                PrivateKey privateKey = keyService.reconstructPrivateKey(sender);
 
                 // decrypt conversation key
                 byte[] conversationKeyBytes = encryptionService.decryptWithPrivateKey(ck.getConversationKey(),
@@ -113,17 +101,7 @@ public class MessageServiceImpl implements MessageService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Conversation key not found for user."));
 
-                // decrypt user's private key first
-                byte[] privateKeyBytes = keyService.decryptPrivateKey(sender.getPrivateKeyEncrypted());
-
-                // rebuild PrivateKey object
-                PrivateKey privateKey;
-                try {
-                        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-                        privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateKeyBytes));
-                } catch (Exception e) {
-                        throw new RuntimeException("Failed to rebuild private key.", e);
-                }
+                PrivateKey privateKey = keyService.reconstructPrivateKey(sender);
 
                 // decrypt conversation key
                 byte[] conversationKeyBytes = encryptionService.decryptWithPrivateKey(ck.getConversationKey(),
