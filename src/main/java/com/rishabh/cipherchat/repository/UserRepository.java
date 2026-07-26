@@ -18,8 +18,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
-    @Query("SELECT u FROM User u WHERE " +
-           "(:search IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))) " +
-           "ORDER BY u.dateCreated DESC")
+    @Query(value = "SELECT * FROM c_users u WHERE " +
+           "(:search IS NULL OR LOWER(CAST(u.email AS text)) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "ORDER BY u.date_created DESC",
+           countQuery = "SELECT COUNT(*) FROM c_users u WHERE " +
+           "(:search IS NULL OR LOWER(CAST(u.email AS text)) LIKE LOWER(CONCAT('%', :search, '%')))",
+           nativeQuery = true)
     Page<User> searchUsers(@Param("search") String search, Pageable pageable);
 }
