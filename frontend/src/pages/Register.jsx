@@ -53,13 +53,13 @@ export default function Register() {
           )}
 
           <div>
-            <label className="block text-gray-400 text-sm mb-1">Email</label>
+            <label className="block text-gray-400 text-sm mb-1">Username</label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors"
-              placeholder="you@example.com"
+              placeholder="username"
               required
             />
           </div>

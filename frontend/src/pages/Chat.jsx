@@ -68,9 +68,10 @@ export default function Chat() {
     e.preventDefault();
     setCreateError('');
     const type = groupMode ? 'GROUP' : 'PRIVATE';
-    const emails = groupMode
+    const emails = (groupMode
       ? groupEmails.split(',').map((s) => s.trim()).filter(Boolean)
-      : [newEmail.trim()];
+      : [newEmail.trim()])
+      .map((u) => u.includes('@') ? u : u + '@cc.io');
 
     if (emails.length === 0) return;
 
@@ -235,16 +236,16 @@ export default function Chat() {
                   value={groupEmails}
                   onChange={(e) => setGroupEmails(e.target.value)}
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
-                  placeholder="user1@x.com, user2@x.com"
+                  placeholder="user1, user2, user3"
                   autoFocus
                 />
               ) : (
                 <input
-                  type="email"
+                  type="text"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
-                  placeholder="user@example.com"
+                  placeholder="username"
                   required
                   autoFocus
                 />

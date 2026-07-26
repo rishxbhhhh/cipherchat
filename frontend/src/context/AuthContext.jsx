@@ -27,7 +27,8 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (username, password) => {
+    const email = username.includes('@') ? username : username + '@cc.io';
     const res = await api.post('/auth/login', { email, password });
     const { accessToken, refreshToken } = res.data;
     localStorage.setItem('accessToken', accessToken);
@@ -37,7 +38,8 @@ export function AuthProvider({ children }) {
     return res.data;
   }, []);
 
-  const register = useCallback(async (email, password) => {
+  const register = useCallback(async (username, password) => {
+    const email = username.includes('@') ? username : username + '@cc.io';
     await api.post('/auth/register', { email, password });
   }, []);
 
