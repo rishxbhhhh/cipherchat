@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="012-fix-email-column-type" author="rishabh" dbms="postgresql">
+        <comment>Fix email/password columns from bytea to varchar for PostgreSQL</comment>
+        <sql>
+            ALTER TABLE c_users ALTER COLUMN email TYPE varchar(255) USING email::varchar;
+            ALTER TABLE c_users ALTER COLUMN password TYPE varchar(512) USING password::varchar;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
