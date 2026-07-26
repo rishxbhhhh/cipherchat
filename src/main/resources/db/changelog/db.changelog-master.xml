@@ -14,5 +14,6 @@
     <include file="008-create-conversation-keys.xml" relativeToChangelogFile="true" />
     <include file="009-create-token-blacklist.xml" relativeToChangelogFile="true" />
     <include file="010-add-enabled-to-users.xml" relativeToChangelogFile="true" />
+    <include file="011-add-name-to-conversations.xml" relativeToChangelogFile="true" />
 
 </databaseChangeLog>

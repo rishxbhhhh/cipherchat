@@ -41,3 +41,7 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+tasks.named('bootRun') {
+	jvmArgs = ['-Xmx2g', '-Xms1g', '-XX:+UseG1GC']
+}

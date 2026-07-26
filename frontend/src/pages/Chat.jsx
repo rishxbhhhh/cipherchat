@@ -16,10 +16,16 @@ export default function Chat() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [newEmail, setNewEmail] = useState('');
+  const [groupEmails, setGroupEmails] = useState('');
+  const [groupMode, setGroupMode] = useState(false);
   const [createError, setCreateError] = useState('');
 
   const onMessage = useCallback((convId, msg) => {
-    setMessages((prev) => [...prev, { ...msg, id: msg.messageId || Date.now() }]);
+    setMessages((prev) => {
+      // Dedupe — STOMP may deliver the same message twice on reconnect
+      if (prev.some((m) => m.id === msg.messageId)) return prev;
+      return [...prev, { ...msg, id: msg.messageId || Date.now() }];
+    });
   }, []);
 
   const stomp = useStomp(onMessage);
@@ -56,28 +62,27 @@ export default function Chat() {
   const handleSend = (text) => {
     if (!activeConv) return;
     stomp.send(activeConv.id, text);
-    setMessages((prev) => [...prev, {
-      id: Date.now(),
-      senderEmail: user.email,
-      content: text,
-      sentAt: new Date().toISOString(),
-    }]);
   };
 
   const handleCreate = async (e) => {
     e.preventDefault();
     setCreateError('');
-    if (!newEmail.trim()) return;
+    const type = groupMode ? 'GROUP' : 'PRIVATE';
+    const emails = groupMode
+      ? groupEmails.split(',').map((s) => s.trim()).filter(Boolean)
+      : [newEmail.trim()];
+
+    if (emails.length === 0) return;
 
     try {
       const res = await api.post('/conversations/create', {
-        type: 'PRIVATE',
-        participantEmails: [newEmail.trim()],
+        type,
+        participantEmails: emails,
       });
       const conv = {
         id: res.data.conversationId,
-        name: newEmail.trim(),
-        type: 'PRIVATE',
+        name: groupMode ? `Group:${res.data.conversationId}` : emails[0],
+        type,
       };
       setConversations((prev) => {
         if (prev.find((c) => c.id === conv.id)) return prev;
@@ -86,6 +91,8 @@ export default function Chat() {
       setActiveConv(conv);
       setShowCreate(false);
       setNewEmail('');
+      setGroupEmails('');
+      setGroupMode(false);
     } catch (err) {
       setCreateError(err.response?.data?.message || 'Failed to create conversation');
     }
@@ -97,8 +104,17 @@ export default function Chat() {
     navigate('/login');
   };
 
+  const handleRename = async (convId, newName) => {
+    try {
+      await api.put(`/conversations/${convId}/rename`, { name: newName });
+      setConversations((prev) =>
+        prev.map((c) => (c.id === convId ? { ...c, name: newName } : c))
+      );
+    } catch {}
+  };
+
   return (
-    <div className="h-screen bg-gray-950 flex overflow-hidden">
+    <div className="h-screen bg-gray-950 flex overflow-hidden" style={{ height: '100dvh' }}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -113,12 +129,13 @@ export default function Chat() {
         activeId={activeConv?.id}
         onSelect={setActiveConv}
         onCreate={() => setShowCreate(true)}
+        onRename={handleRename}
         show={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
 
-      {/* Main chat area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main chat area — header (shrink) + messages (grow) + input (shrink) */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
         {/* Top bar */}
         <div className="h-14 border-b border-gray-800 flex items-center px-3 md:px-4 gap-3 shrink-0 bg-gray-900">
           <button
@@ -192,24 +209,50 @@ export default function Chat() {
       {showCreate && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4">
           <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 w-full max-w-sm">
-            <h3 className="text-white font-semibold mb-4">New conversation</h3>
+            <h3 className="text-white font-semibold mb-4">
+              New {groupMode ? 'group' : 'private chat'}
+            </h3>
+
+            {/* Toggle */}
+            <div className="flex gap-1 mb-3 bg-gray-800 rounded-lg p-0.5 text-sm">
+              <button type="button"
+                onClick={() => setGroupMode(false)}
+                className={`flex-1 py-1.5 rounded-md transition-colors ${!groupMode ? 'bg-indigo-600 text-white' : 'text-gray-400'}`}
+              >Private</button>
+              <button type="button"
+                onClick={() => setGroupMode(true)}
+                className={`flex-1 py-1.5 rounded-md transition-colors ${groupMode ? 'bg-indigo-600 text-white' : 'text-gray-400'}`}
+              >Group</button>
+            </div>
+
             <form onSubmit={handleCreate} className="space-y-3">
               {createError && (
                 <p className="text-red-400 text-sm">{createError}</p>
               )}
-              <input
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
-                placeholder="user@example.com"
-                required
-                autoFocus
-              />
+              {groupMode ? (
+                <input
+                  type="text"
+                  value={groupEmails}
+                  onChange={(e) => setGroupEmails(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
+                  placeholder="user1@x.com, user2@x.com"
+                  autoFocus
+                />
+              ) : (
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500"
+                  placeholder="user@example.com"
+                  required
+                  autoFocus
+                />
+              )}
               <div className="flex gap-2 justify-end">
                 <button
                   type="button"
-                  onClick={() => { setShowCreate(false); setCreateError(''); }}
+                  onClick={() => { setShowCreate(false); setCreateError(''); setGroupMode(false); }}
                   className="px-4 py-2 text-gray-400 hover:text-white text-sm transition-colors"
                 >
                   Cancel

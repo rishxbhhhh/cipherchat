@@ -39,3 +39,4 @@ out/
 ### External Config ###
 opt/
 log/src/main/resources/static/
+src/main/resources/static/

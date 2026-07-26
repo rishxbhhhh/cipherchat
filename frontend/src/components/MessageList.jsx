@@ -8,7 +8,7 @@ export default function MessageList({ messages, currentUserEmail }) {
   }, [messages]);
 
   return (
-    <div className="flex-1 overflow-y-auto px-3 md:px-4 py-3 space-y-2">
+    <div className="flex-1 overflow-y-auto px-3 md:px-4 py-3 space-y-2 min-h-0">
       {messages.length === 0 && (
         <p className="text-gray-500 text-sm text-center mt-8">
           No messages yet. Say hello!

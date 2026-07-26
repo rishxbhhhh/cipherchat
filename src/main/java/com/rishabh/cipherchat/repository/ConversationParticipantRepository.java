@@ -12,4 +12,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
 
     @Query("SELECT cp FROM ConversationParticipant cp JOIN FETCH cp.conversation WHERE cp.user.email = :email")
     List<ConversationParticipant> findByUserEmailWithConversation(String email);
+
+    @Query("SELECT cp.user.email FROM ConversationParticipant cp WHERE cp.conversation.id = :conversationId AND cp.user.email <> :userEmail")
+    List<String> findOtherParticipantEmails(Long conversationId, String userEmail);
 }

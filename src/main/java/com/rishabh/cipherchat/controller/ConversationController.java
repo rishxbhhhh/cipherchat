@@ -5,7 +5,9 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,5 +37,17 @@ public class ConversationController {
     @GetMapping
     public ResponseEntity<?> listConversations(Authentication authentication) {
         return ResponseEntity.ok(conversationService.listConversations(authentication.getName()));
+    }
+
+    @PutMapping("/{id}/rename")
+    public ResponseEntity<?> renameConversation(@PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
+        String newName = body.get("name");
+        if (newName == null || newName.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Name is required."));
+        }
+        conversationService.renameConversation(id, authentication.getName(), newName.trim());
+        return ResponseEntity.ok(Map.of("message", "Renamed successfully."));
     }
 }

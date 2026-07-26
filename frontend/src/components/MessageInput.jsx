@@ -14,7 +14,7 @@ export default function MessageInput({ onSend }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-t border-gray-800 px-3 md:px-4 py-3 flex gap-2 bg-gray-900"
+      className="border-t border-gray-800 px-3 md:px-4 py-3 flex gap-2 bg-gray-900 shrink-0"
     >
       <input
         type="text"

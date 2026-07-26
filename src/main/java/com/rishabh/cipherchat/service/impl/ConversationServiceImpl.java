@@ -109,12 +109,37 @@ public class ConversationServiceImpl implements ConversationService {
                 .stream()
                 .map(cp -> {
                     Conversation c = cp.getConversation();
+                    String displayName;
+                    if (c.getType() == ConversationType.PRIVATE) {
+                        List<String> others = conversationParticipantRepository
+                                .findOtherParticipantEmails(c.getId(), userEmail);
+                        displayName = others.isEmpty() ? userEmail : others.get(0);
+                    } else {
+                        displayName = c.getName() != null ? c.getName() : "Group:" + c.getId();
+                    }
                     return new ConversationListResponse(
                             c.getId(),
                             c.getType().name(),
-                            "Conversation " + c.getId(),
+                            displayName,
                             c.getCreatedAt());
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void renameConversation(Long conversationId, String userEmail, String newName) {
+        var cp = conversationParticipantRepository
+                .findByUserEmailWithConversation(userEmail).stream()
+                .filter(p -> p.getConversation().getId().equals(conversationId))
+                .findFirst()
+                .orElseThrow(() -> new ForbiddenException("Not a participant."));
+
+        Conversation c = cp.getConversation();
+        if (c.getType() != ConversationType.GROUP) {
+            throw new BadRequestException("Only group conversations can be renamed.");
+        }
+        c.setName(newName);
+        conversationRepository.save(c);
     }
 }

@@ -1,6 +1,7 @@
 package com.rishabh.cipherchat.controller;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -29,8 +30,8 @@ public class ChatWebSocketController {
 
         messagingTemplate.convertAndSend(
                 "/topic/conversation/" + request.getConversationId(),
-                new WebSocketMessage(messageId, principal.getName(), request.getContent()));
+                new WebSocketMessage(messageId, principal.getName(), request.getContent(), LocalDateTime.now()));
     }
 
-    public record WebSocketMessage(Long messageId, String senderEmail, String content) {}
+    public record WebSocketMessage(Long messageId, String senderEmail, String content, LocalDateTime sentAt) {}
 }

@@ -28,6 +28,9 @@ public class Conversation {
     @Column(nullable = false)
     private ConversationType type;
 
+    @Column
+    private String name;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

@@ -1,11 +1,29 @@
+import { useState } from 'react';
+
 export default function ConversationList({
   conversations,
   activeId,
   onSelect,
   onCreate,
+  onRename,
   show,
   onClose,
 }) {
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState('');
+
+  const startEdit = (c) => {
+    setEditingId(c.id);
+    setEditName(c.name || '');
+  };
+
+  const saveEdit = (c) => {
+    if (editName.trim() && editName.trim() !== c.name) {
+      onRename?.(c.id, editName.trim());
+    }
+    setEditingId(null);
+  };
+
   return (
     <div
       className={`
@@ -49,7 +67,7 @@ export default function ConversationList({
           conversations.map((c) => (
             <button
               key={c.id}
-              onClick={() => { onSelect(c); onClose(); }}
+              onClick={() => { if (editingId !== c.id) { onSelect(c); onClose(); } }}
               className={`w-full text-left px-4 py-3 border-b border-gray-800/50 transition-colors ${
                 activeId === c.id
                   ? 'bg-indigo-600/20 border-l-2 border-l-indigo-500'
@@ -60,10 +78,40 @@ export default function ConversationList({
                 <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-300 shrink-0">
                   {c.type === 'GROUP' ? '#' : '@'}
                 </div>
-                <div className="min-w-0">
-                  <p className="text-white text-sm truncate">{c.name || 'Chat'}</p>
+                <div className="min-w-0 flex-1">
+                  {editingId === c.id ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="bg-gray-800 border border-gray-600 rounded px-2 py-0.5 text-white text-sm w-full focus:outline-none focus:border-indigo-500"
+                        autoFocus
+                        onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(c); if (e.key === 'Escape') setEditingId(null); }}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <span
+                        onClick={(e) => { e.stopPropagation(); saveEdit(c); }}
+                        className="text-green-400 hover:text-green-300 cursor-pointer shrink-0"
+                      >
+                        ✓
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-white text-sm truncate">{c.name || 'Chat'}</p>
+                  )}
                   <p className="text-gray-500 text-xs">{c.type === 'GROUP' ? 'Group' : 'Private'}</p>
                 </div>
+                {c.type === 'GROUP' && editingId !== c.id && (
+                  <span
+                    onClick={(e) => { e.stopPropagation(); startEdit(c); }}
+                    className="text-gray-500 hover:text-gray-300 cursor-pointer shrink-0"
+                    title="Rename group"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </span>
+                )}
               </div>
             </button>
           ))
