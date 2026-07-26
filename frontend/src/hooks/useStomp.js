@@ -8,7 +8,7 @@ export default function useStomp(onMessage) {
     if (clientRef.current?.active) return;
 
     const client = new Client({
-      brokerURL: `ws://${window.location.host}/ws`,
+      brokerURL: `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`,
       connectHeaders: {
         Authorization: `Bearer ${token}`,
       },
