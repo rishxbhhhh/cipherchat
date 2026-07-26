@@ -16,8 +16,11 @@ import com.rishabh.cipherchat.entity.User;
 import com.rishabh.cipherchat.exception.ResourceNotFoundException;
 import com.rishabh.cipherchat.repository.UserRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
 @RequestMapping("/api/admin")
+@Slf4j
 public class AdminController {
 
     private final UserRepository userRepository;
@@ -32,10 +35,11 @@ public class AdminController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String search) {
 
+        log.info("Fetching userlist page {} of size {}", page, size);
         Page<User> users = userRepository.searchUsers(
                 (search != null && !search.isBlank()) ? search.trim() : null,
                 PageRequest.of(page, size));
-
+        log.info("Fetched userlist page {} of size {}", page, size);
         var result = users.map(u -> Map.of(
                 "id", u.getId(),
                 "email", u.getEmail(),
