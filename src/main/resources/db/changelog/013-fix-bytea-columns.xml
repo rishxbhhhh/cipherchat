@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="013-force-fix-email-password-column-types" author="rishabh" dbms="postgresql" runAlways="true" runOnChange="true">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name='c_users' AND column_name='email' AND data_type='bytea'
+            </sqlCheck>
+        </preConditions>
+        <comment>Force-fix email and password columns from bytea to varchar (idempotent)</comment>
+        <sql>
+            ALTER TABLE c_users ALTER COLUMN email TYPE varchar(255) USING convert_from(email, 'UTF8');
+            ALTER TABLE c_users ALTER COLUMN password TYPE varchar(512) USING convert_from(password, 'UTF8');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -16,5 +16,6 @@
     <include file="010-add-enabled-to-users.xml" relativeToChangelogFile="true" />
     <include file="011-add-name-to-conversations.xml" relativeToChangelogFile="true" />
     <include file="012-fix-email-column-type.xml" relativeToChangelogFile="true" />
+    <include file="013-fix-bytea-columns.xml" relativeToChangelogFile="true" />
 
 </databaseChangeLog>
