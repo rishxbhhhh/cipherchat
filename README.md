@@ -5,98 +5,57 @@
 [![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-8-646cff.svg)](https://vite.dev)
 [![Tailwind](https://img.shields.io/badge/Tailwind-4-38bdf8.svg)](https://tailwindcss.com)
-[![Fly.io](https://img.shields.io/badge/Fly.io-deploy-8b5cf6.svg)](https://fly.io)
+[![Render](https://img.shields.io/badge/Render-deploy-46e3b7.svg)](https://render.com)
 
-End-to-end encrypted real-time chat. Messages are encrypted at rest with **AES-256-GCM** and secured with **RSA-2048** keypairs per user. Built with Spring Boot on the backend and React + Tailwind on the frontend — deployable as a single JAR.
+End-to-end encrypted real-time chat. Messages at rest: **AES-256-GCM**. Keys: **RSA-2048** per user. Username-based auth (`@cc.io` domain). Admin panel with user enable/disable.
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────┐
-│  Browser (React SPA)                         │
-│  Login → JWT → WebSocket (STOMP)             │
-└──────────────────┬───────────────────────────┘
-                   │ HTTPS + WSS
-┌──────────────────▼───────────────────────────┐
-│  Spring Boot (port 8080)                     │
-│  ├─ REST API  (/api/auth, /api/conversations,│
-│  │             /api/messages, /api/admin)    │
-│  ├─ WebSocket (/ws — STOMP)                  │
-│  ├─ Static files (React build)               │
-│  └─ JWT auth filter + token blacklist        │
-└──────────────────┬───────────────────────────┘
-                   │
-┌──────────────────▼───────────────────────────┐
-│  H2 (dev) / PostgreSQL (prod)                │
-│  Liquibase migrations                        │
-└──────────────────────────────────────────────┘
+Browser (React SPA) ── HTTPS + WSS ── Spring Boot :8080
+                                        ├─ REST (/api/auth, /api/conversations,
+                                        │         /api/messages, /api/admin)
+                                        ├─ WebSocket (/ws — STOMP)
+                                        ├─ Static files (React build)
+                                        └─ JWT + token blacklist
+                                              │
+                                        PostgreSQL (prod) / H2 (dev)
 ```
 
 ### Encryption Model
 
 ```
-User Registration:
-  RSA-2048 keypair generated
-  Public key  → stored as plaintext
-  Private key → AES-256-GCM encrypted with master key → stored
-
-Conversation Creation:
-  Per-conversation AES-256 key generated
-  For each participant: AES key wrapped with their RSA public key
-
-Message Send / Receive:
-  Decrypt user private key (master key)
-  Unwrap conversation AES key (RSA private)
-  Encrypt/decrypt message body (AES-256-GCM, random IV)
+Registration:   RSA-2048 keypair → public key stored, private key AES-256-GCM wrapped
+Conversation:   Per-conversation AES-256 key → RSA-OAEP wrapped per participant
+Message:        AES-256-GCM (random IV, authenticated)
+Admin:          No encryption keys, cannot chat
 ```
-
-Admins have **no encryption keys** — they cannot chat, only manage users.
 
 ---
 
 ## Quick Start
 
-### Prerequisites
-
-- Java 21
-- Node.js 20+ (for frontend dev)
-- Gradle (wrapper included)
-
-### Run (development)
+**Prerequisites:** Java 21, Node.js 20+
 
 ```bash
-# Terminal 1 — backend
-./gradlew bootRun
-# Runs on http://localhost:8080
+# Terminal 1 — backend (dev profile, H2 in-memory)
+./gradlew bootRun --args='--spring.profiles.active=dev'
 
-# Terminal 2 — frontend (Vite dev server with hot reload)
-cd frontend
-npm install
-npm run dev
-# Runs on http://localhost:5173, proxies API calls to :8080
+# Terminal 2 — frontend (Vite HMR, proxies API → :8080)
+cd frontend && npm install && npm run dev -- --host 0.0.0.0
 ```
 
-### Run (production-like — single JAR)
+Open `http://localhost:5173` (with Vite) or `http://localhost:8080` (served from Spring Boot static).
 
-```bash
-# Build frontend into Spring Boot's static directory
-cd frontend && npm install && npm run build
+### Default admin
 
-# Build and run the Spring Boot JAR
-cd ..
-./gradlew bootJar
-java -jar build/libs/*.jar
-# Open http://localhost:8080
-```
+Admin email/password set via env vars. Dev defaults: `admin@cipherchat.io` / `admin`.
 
-### Default credentials
+### Username-based auth
 
-| Email | Password | Role | Notes |
-|-------|----------|------|-------|
-| `admin@cipherchat.io` | `admin` | ADMIN | User management only |
-| *(register via UI)* | — | USER | Full chat access |
+Users enter a **username** (e.g. `alice`). The frontend appends `@cc.io` → `alice@cc.io`. No email validation. Usernames are free-text strings.
 
 ---
 
@@ -106,26 +65,34 @@ java -jar build/libs/*.jar
 
 ```
 GET /health/ping                    → 200 "Cipher Chat v1.0 is up."
-GET /health/test                    → 200 (requires valid JWT)
+GET /health/test                    → 200 (requires JWT)
 ```
 
 ### Auth
 
 ```
-POST /api/auth/register             { "email": "...", "password": "..." }
-POST /api/auth/login                { "email": "...", "password": "..." }
-    → { "accessToken": "...", "tokenType": "Bearer ", "expiresIn": 3600, "refreshToken": "..." }
+POST /api/auth/register             { "email": "alice@cc.io", "password": "..." }
+POST /api/auth/login                { "email": "alice@cc.io", "password": "..." }
+    → { "accessToken", "tokenType": "Bearer ", "expiresIn": 3600, "refreshToken" }
 POST /api/auth/refresh              { "refreshToken": "..." }
-    → { "accessToken": "...", "tokenType": "Bearer ", "expiresIn": 3600 }
-POST /api/auth/logout               (Authorization: Bearer *** — blacklists current token)
+    → { "accessToken", "tokenType": "Bearer ", "expiresIn": 3600 }
+POST /api/auth/logout               Authorization: Bearer <token>
+    → blacklists current JWT
 ```
 
 ### Conversations
 
 ```
-GET  /api/conversations             → List user's conversations (requires JWT)
-POST /api/conversations/create      { "type": "PRIVATE|GROUP", "participantEmails": ["..."] }
+GET  /api/conversations             → list user's conversations
+    → [{ "id", "type", "name", "createdAt", "lastMessage", "lastMessageAt" }]
+    Private chats show other user's email. Groups show custom name or "Group:<id>".
+
+POST /api/conversations/create      { "type": "PRIVATE|GROUP", "participantEmails": ["bob@cc.io"] }
     → { "conversationId": 1 }
+    Private chats are idempotent — same pair returns existing conversation.
+
+PUT  /api/conversations/{id}/rename { "name": "New Group Name" }
+    → Rename group (participants only, group type only)
 ```
 
 ### Messages
@@ -133,94 +100,98 @@ POST /api/conversations/create      { "type": "PRIVATE|GROUP", "participantEmail
 ```
 POST /api/messages/send             { "conversationId": 1, "content": "Hello" }
     → { "messageId": 1 }
+
 GET  /api/messages/history?conversationId=1&page=0&size=20
-    → Paginated message list (decrypted on server)
+    → Paginated, decrypted on server
 ```
 
 ### WebSocket (STOMP)
 
 ```
-Connect:  ws://<host>/ws
-Headers:  Authorization: Bearer <jwt>
+Connect:  wss://<host>/ws
+Headers:  Authorization: Bearer <token>
 
-Subscribe:  /topic/conversation/{id}     (receive real-time messages)
-Send:       /app/chat                     { "conversationId": 1, "content": "Hi" }
+Subscribe: /topic/conversation/{id}    (real-time messages with timestamps)
+Send:      /app/chat                   { "conversationId": 1, "content": "Hi" }
 ```
 
-### Admin (requires ADMIN role)
+### Admin (ADMIN role)
 
 ```
-GET  /api/admin/users?page=0&size=15&search=email
-    → Paginated user list with search
+GET  /api/admin/users?page=0&size=15&search=alice
+    → Paginated user list with search by email
 
 PUT  /api/admin/users/{id}/toggle
     → Enable/disable user. Cannot toggle admin accounts.
+    Disabled users get 401 on login.
 ```
 
 ---
 
-## Project Structure
+## Configuration
 
-```
-cipherchat/
-├── src/main/java/com/rishabh/cipherchat/
-│   ├── CipherchatApplication.java      # Entry point + admin seeder
-│   ├── config/
-│   │   └── WebSocketConfig.java        # STOMP broker, /ws endpoint
-│   ├── controller/
-│   │   ├── AdminController.java        # User management (ADMIN only)
-│   │   ├── AuthController.java         # Register, login, refresh, logout
-│   │   ├── ChatWebSocketController.java # Real-time chat handler
-│   │   ├── ConversationController.java  # Create + list conversations
-│   │   ├── HealthController.java       # Health check
-│   │   ├── MessageController.java      # Send + history
-│   │   ├── RootController.java         # Serves index.html
-│   │   └── SpaFallbackController.java  # Client-side route forwarding
-│   ├── dto/                            # Request/response objects
-│   ├── entity/                         # JPA entities (+ TokenBlacklist)
-│   ├── exception/                      # Custom exceptions + global handler
-│   ├── repository/                     # Spring Data repositories
-│   ├── security/
-│   │   ├── JwtAuthenticationFilter.java    # JWT validation + blacklist check
-│   │   ├── SecurityConfig.java            # CORS, CSRF, role-based authz
-│   │   └── WebSocketAuthInterceptor.java  # STOMP JWT validation
-│   └── service/
-│       ├── impl/
-│       │   ├── AuthServiceImpl.java        # Registration + login + keygen
-│       │   ├── ConversationServiceImpl.java # Conversation creation + list
-│       │   ├── EncryptionServiceImpl.java  # AES-256-GCM + RSA-OAEP
-│       │   ├── JwtServiceImpl.java         # JWT generation + validation
-│       │   ├── KeyServiceImpl.java         # RSA keygen + AES-GCM wrap
-│       │   ├── MessageServiceImpl.java     # Message send + history
-│       │   └── TokenBlacklistPurgeService.java # Hourly expired token cleanup
-│       └── interfaces/
-├── src/main/resources/
-│   ├── application.properties          # Shared config
-│   ├── application-dev.properties      # H2, dev settings
-│   ├── application-prod.properties     # PostgreSQL, production
-│   ├── db/changelog/                   # Liquibase migrations (10 files)
-│   └── static/                         # React build output (gitignored)
-├── frontend/                           # React + Vite + Tailwind
-│   ├── src/
-│   │   ├── api/client.js              # Axios + JWT interceptor + auto-refresh
-│   │   ├── context/AuthContext.jsx     # Auth state, JWT role parsing
-│   │   ├── hooks/useStomp.js           # STOMP connection manager
-│   │   ├── pages/
-│   │   │   ├── Login.jsx               # Sign-in form
-│   │   │   ├── Register.jsx            # Registration form
-│   │   │   ├── Chat.jsx                # Full chat interface (responsive)
-│   │   │   └── Admin.jsx               # User management panel
-│   │   └── components/
-│   │       ├── ConversationList.jsx     # Mobile-optimized sidebar
-│   │       ├── MessageList.jsx          # Auto-scrolling messages
-│   │       └── MessageInput.jsx         # Text input + send button
-│   ├── vite.config.js                  # Proxy + build → static/
-│   └── package.json
-├── Dockerfile                          # Multi-stage (eclipse-temurin:21)
-├── fly.toml                            # Fly.io config (Mumbai, auto HTTPS)
-├── build.gradle                        # Spring Boot 3.5, Java 21, Gradle 8
-└── .dockerignore
-```
+### Environment Variables
+
+| Variable | Default (dev) | Description |
+|----------|--------------|-------------|
+| `SPRING_PROFILES_ACTIVE` | `dev` | `dev` or `prod` |
+| `CIPHERCHAT_MASTER_KEY` | `dev-only-change-in-production` | 32-char AES key for private key wrapping |
+| `PGHOST` | — | PostgreSQL host (Render auto-injects) |
+| `PGPORT` | `5432` | PostgreSQL port |
+| `PGUSER` | — | PostgreSQL user |
+| `PGPASSWORD` | — | PostgreSQL password |
+| `PGDATABASE` | — | PostgreSQL database name |
+| `CIPHERCHAT_ADMIN_EMAIL` | `admin@cipherchat.io` | Seeded admin email |
+| `CIPHERCHAT_ADMIN_PASSWORD` | `admin` | Seeded admin password |
+| `CIPHERCHAT_DB_USERNAME` | `cipherchat` | DB username (H2 file-based) |
+| `CIPHERCHAT_DB_PASSWORD` | `change-me-in-production` | DB password (H2 file-based) |
+
+### Profiles
+
+- **`dev`** — H2 in-memory, console at `/h2`, verbose actuator
+- **`prod`** — PostgreSQL via `PGHOST`/`PGPORT`/`PGUSER`/`PGPASSWORD`/`PGDATABASE`, health+info actuator
+
+---
+
+## Deploy to Render
+
+### Setup
+
+1. Create Render account, link GitHub repo
+2. Create **Web Service** pointing to `https://github.com/rishxbhhhh/cipherchat`
+3. Runtime: Docker, plan: Free (512MB)
+4. Create **PostgreSQL** instance on Render (free dev tier)
+5. Set environment variables:
+
+| Key | Value |
+|-----|-------|
+| `SPRING_PROFILES_ACTIVE` | `prod` |
+| `CIPHERCHAT_MASTER_KEY` | 32-char random string |
+| `CIPHERCHAT_ADMIN_EMAIL` | `admin@cc.io` |
+| `CIPHERCHAT_ADMIN_PASSWORD` | your-secure-password |
+
+6. Render auto-injects `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` from the linked PostgreSQL
+
+### Deploy
+
+Push to `main` → Render auto-deploys. First deploy takes ~4 min (frontend + backend build). Data persists across restarts (PostgreSQL).
+
+---
+
+## UI Features
+
+| Feature | Detail |
+|---------|--------|
+| Username auth | Enter `alice` → becomes `alice@cc.io` |
+| Responsive | Mobile sidebar overlay, fixed header + input, `100dvh` viewport |
+| Message grouping | Consecutive same-sender messages merged visually |
+| Date separators | Today / Yesterday / date labels between days |
+| Last message preview | Shown under conversation name in sidebar |
+| Group rename | Pencil icon → inline edit → ✓ save |
+| Private chat names | Shows other user's email automatically |
+| Admin panel | User list with search, enable/disable toggle |
+| Token revocation | Logout blacklists JWT, checked on every request |
+| Deduplication | STOMP double-delivery on reconnect handled |
 
 ---
 
@@ -229,93 +200,67 @@ cipherchat/
 | Measure | Detail |
 |---------|--------|
 | Passwords | BCrypt(12) |
-| Tokens | JWT (HS512), 1h expiry + 14-day refresh |
-| Token revocation | Blacklist table, checked in filter, hourly purge |
-| Private keys | AES-256-GCM wrapped with master key (env var) |
-| Messages | AES-256-GCM per message (random IV, authenticated) |
+| Tokens | JWT (HS512), 1h expiry + 14-day refresh + `jti` blacklist |
+| Private keys | AES-256-GCM wrapped, master key in env var |
+| Messages | AES-256-GCM per message (random IV, GCM authenticated) |
 | Conversation keys | RSA-2048-OAEP wrapped per participant |
-| Disabled accounts | Rejected at authentication, clear error message |
-| Master key | Externalized via `CIPHERCHAT_MASTER_KEY` env var — never in git |
+| Disabled accounts | Spring Security `DisabledException` → 401 |
+| Master key | Never in git, passed via env var |
+| DB creds + admin creds | All externalized via env vars |
 
 ---
 
-## Configuration
+## Project Structure
 
-### Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `CIPHERCHAT_MASTER_KEY` | **prod** | `dev-only-change-in-production` | 32-char key for private key encryption |
-| `DATABASE_URL` | prod | `jdbc:postgresql://localhost:5432/cipherchat` | JDBC URL |
-| `DB_USERNAME` | prod | `cipherchat` | Database user |
-| `DB_PASSWORD` | prod | `cipherchat` | Database password |
-| `SPRING_PROFILES_ACTIVE` | — | — | `dev` or `prod` |
-
-### Profiles
-
-- **`dev`** (default) — H2 in-memory, H2 console enabled, verbose actuator
-- **`prod`** — PostgreSQL, minimal actuator (health + info)
-
----
-
-## Deploy to Fly.io
-
-Fly.io free tier: 3×256MB VMs, 3GB persistent volume, auto HTTPS, Mumbai region available.
-
-### One-time setup
-
-```powershell
-# Install Fly CLI (Windows PowerShell)
-iwr https://fly.io/install.ps1 -useb | iex
-
-# Login
-fly auth signup
 ```
-
-### Deploy
-
-```bash
-# 1. Build frontend
-cd frontend && npm install && npm run build && cd ..
-
-# 2. Launch the app (first time)
-fly launch
-#   → Choose app name: cipherchat
-#   → Choose region: bom (Mumbai)
-#   → Choose Postgres: No (use SQLite on volume, or add Fly Postgres later)
-#   → Deploy now: No
-
-# 3. Create persistent volume for data
-fly volumes create cipherchat_data --region bom --size 1
-
-# 4. Set secrets
-fly secrets set CIPHERCHAT_MASTER_KEY="your-32-char-secure-random-key-here"
-
-# 5. Deploy
-fly deploy
-
-# 6. Open
-fly open
-```
-
-### Upgrade to Fly Postgres (when needed)
-
-```bash
-fly postgres create --name cipherchat-db --region bom
-fly postgres attach cipherchat-db --app cipherchat
-# Connection string auto-injected as DATABASE_URL
-fly deploy
-```
-
-### Useful commands
-
-```bash
-fly logs                          # Tail logs
-fly status                        # App health
-fly ssh console                   # SSH into VM
-fly secrets list                  # View secrets
-fly volumes list                  # Storage usage
-fly scale memory 512              # Upgrade from 256MB free tier
+cipherchat/
+├── src/main/java/com/rishabh/cipherchat/
+│   ├── CipherchatApplication.java         # Entry + admin seeder (env var creds)
+│   ├── config/WebSocketConfig.java        # STOMP broker
+│   ├── controller/
+│   │   ├── AdminController.java           # User list + toggle
+│   │   ├── AuthController.java            # Register, login, refresh, logout
+│   │   ├── ChatWebSocketController.java   # Real-time with timestamp
+│   │   ├── ConversationController.java    # CRUD + rename
+│   │   ├── HealthController.java
+│   │   ├── MessageController.java
+│   │   ├── RootController.java
+│   │   └── SpaFallbackController.java     # SPA route forwarding
+│   ├── dto/                               # Request/response records
+│   ├── entity/                            # User, Conversation, Message, TokenBlacklist...
+│   ├── exception/                         # Custom exceptions + @RestControllerAdvice
+│   ├── repository/                        # Spring Data JPA repos
+│   ├── security/
+│   │   ├── JwtAuthenticationFilter.java   # JWT + blacklist check
+│   │   ├── SecurityConfig.java            # CORS, stateless, role-based
+│   │   └── WebSocketAuthInterceptor.java  # STOMP JWT auth
+│   └── service/impl/                      # Auth, Conversation, Encryption, JWT, Key, Message
+├── src/main/resources/
+│   ├── application.properties             # Shared config, master key env var
+│   ├── application-dev.properties         # H2, console, dev datasource
+│   ├── application-prod.properties        # PostgreSQL via PGHOST/PGUSER/PGPASSWORD
+│   ├── db/changelog/                      # 12 Liquibase migrations
+│   └── static/                            # React build output (gitignored)
+├── frontend/
+│   ├── src/
+│   │   ├── api/client.js                  # Axios + JWT interceptor + auto-refresh
+│   │   ├── context/AuthContext.jsx        # Auth state, @cc.io append
+│   │   ├── hooks/useStomp.js              # STOMP (wss:// auto-detect)
+│   │   ├── pages/
+│   │   │   ├── Login.jsx                  # Username input
+│   │   │   ├── Register.jsx               # Username input
+│   │   │   ├── Chat.jsx                   # Full chat (group + private create)
+│   │   │   └── Admin.jsx                  # User management panel
+│   │   └── components/
+│   │       ├── ConversationList.jsx       # Sidebar + rename + last message
+│   │       ├── MessageList.jsx            # Grouped messages + date separators
+│   │       └── MessageInput.jsx           # Input + send
+│   ├── vite.config.js                     # outDir: dist, proxy to :8080
+│   └── package.json
+├── Dockerfile                             # 3-stage: Node → JDK → JRE (500MB tuned)
+├── render.yaml                            # Render Blueprint config
+├── build.gradle                           # Spring Boot 3.5.9, Java 21
+└── .dockerignore
 ```
 
 ---
@@ -324,30 +269,15 @@ fly scale memory 512              # Upgrade from 256MB free tier
 
 ```bash
 # Backend
-./gradlew bootRun                 # Start server
-./gradlew test                    # Run all tests (16)
-./gradlew bootJar                 # Build fat JAR
+./gradlew bootRun --args='--spring.profiles.active=dev'   # Start with H2
+./gradlew test                                              # 16 tests
+./gradlew bootJar                                           # Fat JAR
 
 # Frontend
 cd frontend
-npm run dev                       # Vite dev server (port 5173)
-npm run build                     # Production build → ../src/main/resources/static/
-npm run preview                   # Preview production build locally
-```
-
----
-
-## Tests
-
-16 tests covering encryption round-trips and auth flows:
-
-```
-EncryptionServiceTest (10 tests):
-  AES-GCM encrypt/decrypt, IV uniqueness, RSA wrap/unwrap,
-  private key encrypt/decrypt, empty/long/Unicode messages
-
-AuthControllerTest (6 tests):
-  Register, duplicate rejection, login, bad credentials, token refresh
+npm run dev -- --host 0.0.0.0    # Vite HMR on :5173
+npm run build                     # Production build → dist/
+npm run preview                   # Preview production build
 ```
 
 ---
@@ -356,17 +286,22 @@ AuthControllerTest (6 tests):
 
 - [x] JWT auth + refresh tokens
 - [x] Token revocation (real logout)
-- [x] Conversations + messages
-- [x] End-to-end encryption (RSA + AES-GCM)
-- [x] WebSocket real-time messaging (STOMP)
-- [x] Admin panel — user management
-- [x] Account disable/enable
-- [x] React frontend (responsive, mobile-first)
+- [x] Private + group conversations
+- [x] End-to-end encryption (RSA-2048 + AES-256-GCM)
+- [x] WebSocket real-time messaging (STOMP + timestamp)
+- [x] Admin panel — user enable/disable + search
+- [x] Username-based auth (@cc.io)
+- [x] Message grouping + date separators
+- [x] Conversation naming (private: other user, group: editable)
+- [x] Last message preview in sidebar
+- [x] Responsive mobile UI (sidebar overlay, fixed header+input)
 - [x] Spring profiles (dev/prod)
-- [x] Docker + Fly.io deployment
-- [x] Integration tests
-- [ ] File / image sharing with encryption
-- [ ] Group chat enhancements (add/remove members)
-- [ ] Read receipts + typing indicators
+- [x] Docker + Render deployment
+- [x] Externalized config (DB, admin, master key)
+- [x] PostgreSQL persistent storage
+- [x] Integration tests (16)
+- [ ] Typing indicators
+- [ ] Read receipts
+- [ ] File / image sharing
 - [ ] Push notifications
-- [ ] Mobile app (Flutter or React Native)
+- [ ] Member add/remove for groups
