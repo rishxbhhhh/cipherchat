@@ -6,5 +6,7 @@ public record ConversationListResponse(
     Long id,
     String type,
     String name,
-    LocalDateTime createdAt
+    LocalDateTime createdAt,
+    String lastMessage,
+    LocalDateTime lastMessageAt
 ) {}

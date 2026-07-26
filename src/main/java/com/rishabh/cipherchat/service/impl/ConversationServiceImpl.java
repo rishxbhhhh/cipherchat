@@ -3,6 +3,7 @@ package com.rishabh.cipherchat.service.impl;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import com.rishabh.cipherchat.exception.ResourceNotFoundException;
 import com.rishabh.cipherchat.repository.ConversationKeyRepository;
 import com.rishabh.cipherchat.repository.ConversationParticipantRepository;
 import com.rishabh.cipherchat.repository.ConversationRepository;
+import com.rishabh.cipherchat.repository.MessageRepository;
 import com.rishabh.cipherchat.repository.UserRepository;
 import com.rishabh.cipherchat.service.ConversationService;
 import com.rishabh.cipherchat.service.EncryptionService;
@@ -35,15 +37,17 @@ public class ConversationServiceImpl implements ConversationService {
     private final ConversationParticipantRepository conversationParticipantRepository;
     private final EncryptionService encryptionService;
     private final ConversationKeyRepository conversationKeyRepository;
+    private final MessageRepository messageRepository;
 
     public ConversationServiceImpl(ConversationRepository conversationRepository, UserRepository userRepository,
             ConversationParticipantRepository conversationParticipantRepository, EncryptionService encryptionService,
-            ConversationKeyRepository conversationKeyRepository) {
+            ConversationKeyRepository conversationKeyRepository, MessageRepository messageRepository) {
         this.conversationRepository = conversationRepository;
         this.userRepository = userRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.encryptionService = encryptionService;
         this.conversationKeyRepository = conversationKeyRepository;
+        this.messageRepository = messageRepository;
     }
 
     @Override
@@ -121,7 +125,9 @@ public class ConversationServiceImpl implements ConversationService {
                             c.getId(),
                             c.getType().name(),
                             displayName,
-                            c.getCreatedAt());
+                            c.getCreatedAt(),
+                            getLastMessagePreview(c.getId()),
+                            getLastMessageTime(c.getId()));
                 })
                 .collect(Collectors.toList());
     }
@@ -141,5 +147,17 @@ public class ConversationServiceImpl implements ConversationService {
         }
         c.setName(newName);
         conversationRepository.save(c);
+    }
+
+    private String getLastMessagePreview(Long conversationId) {
+        return messageRepository.findTopByConversationIdOrderBySentAtDesc(conversationId)
+                .map(m -> "💬 Message")
+                .orElse(null);
+    }
+
+    private LocalDateTime getLastMessageTime(Long conversationId) {
+        return messageRepository.findTopByConversationIdOrderBySentAtDesc(conversationId)
+                .map(m -> m.getSentAt())
+                .orElse(null);
     }
 }

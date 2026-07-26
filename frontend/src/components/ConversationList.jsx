@@ -97,9 +97,18 @@ export default function ConversationList({
                       </span>
                     </div>
                   ) : (
-                    <p className="text-white text-sm truncate">{c.name || 'Chat'}</p>
+                    <>
+                      <p className="text-white text-sm truncate">{c.name || 'Chat'}</p>
+                      {c.lastMessage && (
+                        <p className="text-gray-500 text-xs truncate">{c.lastMessage}</p>
+                      )}
+                    </>
                   )}
-                  <p className="text-gray-500 text-xs">{c.type === 'GROUP' ? 'Group' : 'Private'}</p>
+                  {!editingId && (
+                    <p className={`text-xs ${c.lastMessage ? 'text-gray-600' : 'text-gray-500'}`}>
+                      {c.type === 'GROUP' ? 'Group' : 'Private'}
+                    </p>
+                  )}
                 </div>
                 {c.type === 'GROUP' && editingId !== c.id && (
                   <span
