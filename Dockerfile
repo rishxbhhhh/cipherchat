@@ -20,7 +20,7 @@ RUN ./gradlew bootJar --no-daemon
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
-ENV JAVA_TOOL_OPTIONS="-Xmx384m -Xss256k -XX:+UseSerialGC -XX:MaxRAM=450m"
+ENV JAVA_TOOL_OPTIONS="-Xmx300m -Xss256k -XX:+UseSerialGC -XX:MaxRAM=400m -XX:MaxMetaspaceSize=80m"
 ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
 CMD ["java", "-jar", "app.jar"]

@@ -10,7 +10,7 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
       - key: JAVA_TOOL_OPTIONS
-        value: "-Xmx384m -Xss256k -XX:+UseSerialGC -XX:MaxRAM=450m"
+        value: "-Xmx300m -Xss256k -XX:+UseSerialGC -XX:MaxRAM=400m -XX:MaxMetaspaceSize=80m"
       - key: CIPHERCHAT_MASTER_KEY
         sync: false
       - key: PORT
