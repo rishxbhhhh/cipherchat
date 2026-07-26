@@ -10,8 +10,17 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
       - key: JAVA_TOOL_OPTIONS
-        value: "-Xmx300m -Xss256k -XX:+UseSerialGC -XX:MaxRAM=400m -XX:MaxMetaspaceSize=80m"
-      - key: CIPHERCHAT_MASTER_KEY
-        sync: false
+        value: "-Xmx350m -Xss256k -XX:+UseSerialGC -XX:MaxRAM=420m -XX:MaxMetaspaceSize=60m"
       - key: PORT
         value: "8080"
+      # Secrets — set these in Render Dashboard: Environment → Environment Variables
+      - key: CIPHERCHAT_MASTER_KEY
+        sync: false
+      - key: CIPHERCHAT_DB_USERNAME
+        sync: false
+      - key: CIPHERCHAT_DB_PASSWORD
+        sync: false
+      - key: CIPHERCHAT_ADMIN_EMAIL
+        sync: false
+      - key: CIPHERCHAT_ADMIN_PASSWORD
+        sync: false

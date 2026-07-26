@@ -16,11 +16,11 @@ COPY src/ src/
 COPY --from=frontend /frontend/dist/ src/main/resources/static/
 RUN ./gradlew bootJar --no-daemon
 
-# Stage 3: Run
+# Stage 3: Run — tuned for 500MB total RAM
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
-ENV JAVA_TOOL_OPTIONS="-Xmx300m -Xss256k -XX:+UseSerialGC -XX:MaxRAM=400m -XX:MaxMetaspaceSize=80m"
+ENV JAVA_TOOL_OPTIONS="-Xmx350m -Xss256k -XX:+UseSerialGC -XX:MaxRAM=420m -XX:MaxMetaspaceSize=60m"
 ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
 CMD ["java", "-jar", "app.jar"]
