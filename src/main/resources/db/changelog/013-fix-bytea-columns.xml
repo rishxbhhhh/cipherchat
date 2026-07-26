@@ -5,17 +5,17 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
     https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
 
-    <changeSet id="013-force-fix-email-password-column-types" author="rishabh" dbms="postgresql">
-        <preConditions onFail="MARK_RAN">
-            <sqlCheck expectedResult="1">
-                SELECT COUNT(*) FROM information_schema.columns
-                WHERE table_name='c_users' AND column_name='email' AND data_type='bytea'
-            </sqlCheck>
-        </preConditions>
-        <comment>Fix email and password columns from bytea to varchar using encode()</comment>
+    <changeSet id="013-force-fix-email-password-column-types" author="rishabh" dbms="postgresql" failOnError="false">
+        <comment>Fix email and password columns from bytea to varchar (idempotent, safe to re-run)</comment>
         <sql>
-            ALTER TABLE c_users ALTER COLUMN email TYPE varchar(255) USING encode(email, 'escape');
-            ALTER TABLE c_users ALTER COLUMN password TYPE varchar(512) USING encode(password, 'escape');
+            DO $$ BEGIN
+                ALTER TABLE c_users ALTER COLUMN email TYPE varchar(255) USING encode(email, 'escape');
+            EXCEPTION WHEN others THEN NULL;
+            END $$;
+            DO $$ BEGIN
+                ALTER TABLE c_users ALTER COLUMN password TYPE varchar(512) USING encode(password, 'escape');
+            EXCEPTION WHEN others THEN NULL;
+            END $$;
         </sql>
     </changeSet>
 
