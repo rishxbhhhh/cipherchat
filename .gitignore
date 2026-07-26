@@ -38,4 +38,4 @@ out/
 
 ### External Config ###
 opt/
-log/
+log/src/main/resources/static/

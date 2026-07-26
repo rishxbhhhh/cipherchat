@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: cipherchat
+    runtime: docker
+    repo: https://github.com/rishxbhhhh/cipherchat
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JAVA_TOOL_OPTIONS
+        value: "-Xmx384m -Xss256k -XX:+UseSerialGC -XX:MaxRAM=450m"
+      - key: CIPHERCHAT_MASTER_KEY
+        sync: false
+      - key: PORT
+        value: "8080"
